@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "Post": {
+      "title": "Post",
+      "description": "A news blog article containing rich HTML content, social URLs, and timestamps",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the news article"
+        },
+        "content": {
+          "type": "string",
+          "description": "The cleaned HTML body of the article"
+        },
+        "youtubeUrl": {
+          "type": "string",
+          "description": "Optional YouTube link to embed"
+        },
+        "facebookUrl": {
+          "type": "string",
+          "description": "Optional Facebook post Link to embed"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["title", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "posts/{postId}": {
+      "schema": "Post",
+      "description": "Collection of all news posts sorted and filtered for public reader or admin"
+    }
+  }
+}

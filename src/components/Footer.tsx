@@ -1,0 +1,146 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Mail, ArrowRight, Check, AlertCircle, Loader2 } from 'lucide-react';
+
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setStatus('error');
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+
+    setStatus('submitting');
+    setErrorMsg('');
+
+    try {
+      await addDoc(collection(db, 'subscribers'), {
+        email: email.trim().toLowerCase(),
+        createdAt: serverTimestamp()
+      });
+      setStatus('success');
+      setEmail('');
+    } catch (err) {
+      console.error('Subscription registry error', err);
+      setStatus('error');
+      setErrorMsg('Subscription service temporarily congested.');
+    }
+  };
+
+  return (
+    <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 text-xs" id="main-footer">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          
+          {/* Brand & Mission Column */}
+          <div className="flex flex-col space-y-2.5">
+            <Link to="/" className="flex items-center space-x-2 text-white">
+              <img 
+                src="https://i.imgur.com/gFgShoZ.jpeg" 
+                alt="Current News Live Logo" 
+                className="h-6 w-6 rounded-md object-cover border border-slate-700"
+                referrerPolicy="no-referrer"
+              />
+              <span className="font-display font-bold text-sm tracking-tight uppercase">Current News</span>
+            </Link>
+            <p className="text-[11px] text-slate-400 max-w-xs leading-relaxed">
+              Serving the public interest with transparent, accurate, and autonomous journalism. Delivering updates directly to readers.
+            </p>
+          </div>
+
+          {/* New Email Subscribers Capture Form Column */}
+          <div className="flex flex-col space-y-2.5" id="footer-subscriber-column">
+            <h4 className="font-display font-semibold text-xs uppercase tracking-wider text-white flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-indigo-400" />
+              <span>Newsletter Alerts</span>
+            </h4>
+            <form onSubmit={handleSubscribe} className="space-y-1.5 max-w-xs">
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (status === 'error') setStatus('idle');
+                  }}
+                  placeholder="name@example.com"
+                  disabled={status === 'submitting'}
+                  className="w-full bg-slate-950/80 border border-slate-700/80 rounded-lg py-1.5 pl-2.5 pr-8 text-[11px] text-slate-200 placeholder:text-slate-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 font-sans block"
+                  id="subscriber-email-input"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'submitting'}
+                  className="absolute right-1 top-1 bottom-1 px-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white rounded-md transition-colors flex items-center justify-center cursor-pointer"
+                  title="Subscribe"
+                  id="subscriber-submit-btn"
+                >
+                  {status === 'submitting' ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : status === 'success' ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <ArrowRight className="h-3 w-3" />
+                  )}
+                </button>
+              </div>
+
+              {/* Status Notifications */}
+              {status === 'success' && (
+                <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium font-sans animate-in fade-in duration-200">
+                  <Check className="h-3 w-3 shrink-0" />
+                  <span>Subscribed!</span>
+                </div>
+              )}
+              {status === 'error' && (
+                <div className="flex items-center gap-1 text-[10px] text-rose-400 font-medium font-sans animate-in fade-in duration-200">
+                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+            </form>
+          </div>
+
+          {/* Useful Copyright Laws for Readers */}
+          <div className="space-y-1.5">
+            <h4 className="font-display font-semibold text-xs uppercase tracking-wider text-white">Copyright</h4>
+            <p className="text-[11px] text-slate-400 leading-relaxed max-w-sm">
+              All editorial dispatches are protected by federal and international copyright laws. Commentary extracts are allowed with full original attribution.
+            </p>
+          </div>
+
+          {/* Useful Reader Information & Nav */}
+          <div className="space-y-1.5">
+            <h4 className="font-display font-semibold text-xs uppercase tracking-wider text-white">Resources</h4>
+            <div className="flex items-center space-x-3 text-[11px]">
+              <Link to="/" className="text-slate-400 hover:text-white transition-colors">Reader Feed</Link>
+              <span className="text-slate-700">|</span>
+              <Link to="/admin" className="text-slate-400 hover:text-white transition-colors">Editorial Portal</Link>
+            </div>
+            <p className="text-[10px] text-slate-500 leading-normal max-w-xs border-t border-slate-800 pt-1.5">
+              Use the live search filter at the top of the homepage to trace dispatches instantly.
+            </p>
+          </div>
+
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500">
+          <p>© {currentYear} Current News. All Rights Reserved.</p>
+          <span className="mt-1 sm:mt-0">Autonomous Press Alliance</span>
+        </div>
+      </div>
+    </footer>
+  );
+}

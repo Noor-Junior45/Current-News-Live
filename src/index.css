@@ -1,0 +1,235 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom modern transitions and scrollbars */
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Highlight style for custom rich text */
+.article-rich-text h1, .article-rich-text h2, .article-rich-text h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-rich-text h1 { font-size: 1.875rem; line-height: 2.25rem; }
+.article-rich-text h2 { font-size: 1.5rem; line-height: 2rem; }
+.article-rich-text h3 { font-size: 1.25rem; line-height: 1.75rem; }
+
+.article-rich-text p {
+  margin-bottom: 1rem;
+  line-height: 1.75;
+  color: #334155;
+  font-size: 1.125rem;
+}
+
+.article-rich-text ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.article-rich-text ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.article-rich-text li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.article-rich-text strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.article-rich-text em {
+  font-style: italic;
+}
+
+/* Quill Editor custom styling to match our theme */
+.quill {
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+}
+
+.ql-toolbar.ql-snow {
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  background-color: #f1f5f9;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  min-height: 240px;
+  font-family: var(--font-sans) !important;
+  font-size: 1rem !important;
+}
+
+/* Ad spaces specific styling for easy script dropping */
+.ad-leaderboard {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-sidebar {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-footer {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Word breaking, layouts and box-fitting safety */
+.break-words, 
+p, 
+h1, 
+h2, 
+h3, 
+h4, 
+h5, 
+h6, 
+div, 
+span, 
+a {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.article-rich-text {
+  max-width: 100%;
+}
+
+.article-rich-text * {
+  max-width: 100%;
+}
+
+/* Elegant Slate Dark Mode Theme Styles */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+html.dark #app-root-container {
+  background-color: #0f172a;
+}
+
+html.dark #main-header,
+html.dark #main-footer,
+html.dark .bg-white,
+html.dark [id^="post-card-"],
+html.dark #story-form-section > div,
+html.dark #admin-board-view .bg-white,
+html.dark #homepage-view .bg-white,
+html.dark #article-content {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-950,
+html.dark .text-slate-800,
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-100 {
+  background-color: #0f172a !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+html.dark .article-rich-text p,
+html.dark .article-rich-text li {
+  color: #cbd5e1 !important;
+}
+
+html.dark .article-rich-text h1,
+html.dark .article-rich-text h2,
+html.dark .article-rich-text h3,
+html.dark .article-rich-text strong {
+  color: #ffffff !important;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5 {
+  color: #ffffff !important;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+html.dark .quill,
+html.dark .ql-toolbar.ql-snow,
+html.dark .ql-container.ql-snow {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+html.dark .ql-editor {
+  color: #f8fafc !important;
+}
+
+html.dark .ql-snow .ql-stroke {
+  stroke: #e2e8f0 !important;
+}
+
+html.dark .ql-snow .ql-fill {
+  fill: #e2e8f0 !important;
+}
+
+html.dark .ql-snow .ql-picker {
+  color: #e2e8f0 !important;
+}
+
