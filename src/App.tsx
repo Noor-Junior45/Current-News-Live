@@ -56,6 +56,7 @@ export default function App() {
 
             {/* 2. Dynamic Article View Page */}
             <Route path="/post/:id" element={<PostDetailView />} />
+            <Route path="/post/:id/:slug" element={<PostDetailView />} />
 
             {/* 3. Secure Admin Panel */}
             <Route path="/admin" element={<AdminView />} />

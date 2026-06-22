@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Post } from '../types';
+import { Post, slugify } from '../types';
 import BlogPostCard from '../components/BlogPostCard';
 import { Newspaper, Search, RefreshCw, AlertTriangle, ChevronLeft, ChevronRight, ThumbsUp } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -195,7 +195,7 @@ export default function HomeView() {
                return (
                  <Link
                    key={trendingPost.id}
-                   to={`/post/${trendingPost.id}`}
+                   to={`/post/${trendingPost.id}/${slugify(trendingPost.title)}`}
                    className="group bg-white p-4 rounded-xl border border-amber-100 hover:border-amber-300 hover:shadow-sm transition-all duration-300 flex flex-col justify-between cursor-pointer"
                  >
                    <div>

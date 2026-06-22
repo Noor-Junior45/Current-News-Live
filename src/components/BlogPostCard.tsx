@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Post } from '../types';
+import { Post, slugify } from '../types';
 import { Link } from 'react-router-dom';
 import { Calendar, Youtube, Facebook, ArrowRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { doc, updateDoc, increment } from 'firebase/firestore';
@@ -148,7 +148,7 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
 
         {/* Title */}
         <h3 className="font-display font-bold text-xl text-slate-900 group-hover:text-indigo-600 tracking-tight leading-snug mb-3 transition-colors">
-          <Link to={`/post/${post.id}`}>{post.title}</Link>
+          <Link to={`/post/${post.id}/${slugify(post.title)}`}>{post.title}</Link>
         </h3>
 
         {/* Excerpt */}
@@ -200,7 +200,7 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
           </span>
         </div>
         <Link 
-          to={`/post/${post.id}`} 
+          to={`/post/${post.id}/${slugify(post.title)}`} 
           className="text-slate-900 group-hover:text-indigo-600 font-sans text-xs font-semibold uppercase tracking-wider flex items-center space-x-1 transition-colors"
         >
           <span>Read Full Article</span>

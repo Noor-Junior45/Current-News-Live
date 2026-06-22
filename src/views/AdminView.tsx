@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthState } from '../hooks/useAuthState';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
-import { Post } from '../types';
+import { Post, slugify } from '../types';
 import RichTextEditor from '../components/RichTextEditor';
 import { 
   collection, 
@@ -1009,7 +1009,7 @@ export default function AdminView() {
                           )}
 
                           <a 
-                            href={`/post/${postItem.id}`}
+                            href={`/post/${postItem.id}/${slugify(postItem.title)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             title="Open published article"

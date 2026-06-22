@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Post } from '../types';
+import { Post, slugify } from '../types';
 import AdSpace from '../components/AdSpace';
 import EmbedHandler from '../components/EmbedHandler';
 import { Calendar, ChevronLeft, Award, Clock, Twitter, Send, Copy, Check, Share2, ThumbsUp, ThumbsDown, ArrowRight } from 'lucide-react';
@@ -66,6 +66,58 @@ export default function PostDetailView() {
     }
   }, [post]);
 
+  useEffect(() => {
+    if (!post) {
+      document.title = "Current News Live | Independent Journalism";
+      return;
+    }
+
+    // 1. Update Title Tag
+    document.title = `${post.title} | Current News Live`;
+
+    // Helpers to manage meta tags
+    const setMetaTag = (attribute: string, attrVal: string, content: string) => {
+      let element = document.querySelector(`meta[${attribute}="${attrVal}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attribute, attrVal);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('content', content);
+    };
+
+    // Retrieve raw text preview of content for description
+    const summary = getHtmlTextPreview(post.content || '', 155);
+
+    // 2. OpenGraph Tags
+    setMetaTag('property', 'og:title', post.title);
+    setMetaTag('property', 'og:description', summary);
+    setMetaTag('property', 'og:type', 'article');
+    setMetaTag('property', 'og:url', window.location.href);
+    if (post.imageUrl) {
+      setMetaTag('property', 'og:image', post.imageUrl);
+    } else {
+      setMetaTag('property', 'og:image', 'https://i.imgur.com/gFgShoZ.jpeg');
+    }
+
+    // 3. Twitter Card Tags
+    setMetaTag('name', 'twitter:card', post.imageUrl ? 'summary_large_image' : 'summary');
+    setMetaTag('name', 'twitter:title', post.title);
+    setMetaTag('name', 'twitter:description', summary);
+    if (post.imageUrl) {
+      setMetaTag('name', 'twitter:image', post.imageUrl);
+    } else {
+      setMetaTag('name', 'twitter:image', 'https://i.imgur.com/gFgShoZ.jpeg');
+    }
+
+    // 4. Standard description tag
+    setMetaTag('name', 'description', summary);
+
+    return () => {
+      document.title = "Current News Live | Independent Journalism";
+    };
+  }, [post]);
+
   const handleReaction = async (type: 'liked' | 'disliked') => {
     if (!post) return;
     const postRef = doc(db, 'posts', post.id);
@@ -126,7 +178,7 @@ export default function PostDetailView() {
 
   const handleCopyLink = () => {
     if (post) {
-      const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/post/${post.id}` : `https://currentnewslive.vercel.app/post/${post.id}`;
+      const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/post/${post.id}/${slugify(post.title)}` : `https://currentnewslive.vercel.app/post/${post.id}/${slugify(post.title)}`;
       navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -335,7 +387,7 @@ export default function PostDetailView() {
     );
   };
 
-  const dynamicShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/post/${post.id}` : `https://currentnewslive.vercel.app/post/${post.id}`;
+  const dynamicShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/post/${post.id}/${slugify(post.title)}` : `https://currentnewslive.vercel.app/post/${post.id}/${slugify(post.title)}`;
 
   return (
     <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id={`article-${post.id}`}>
@@ -540,7 +592,7 @@ export default function PostDetailView() {
             {relatedPosts.map((relatedPost) => (
               <Link
                 key={relatedPost.id}
-                to={`/post/${relatedPost.id}`}
+                to={`/post/${relatedPost.id}/${slugify(relatedPost.title)}`}
                 className="group flex flex-col bg-white hover:bg-slate-50/40 border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-3xs hover:shadow-xs transition-all duration-200"
               >
                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 block mb-2 font-mono">
