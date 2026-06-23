@@ -8,7 +8,7 @@ export interface AuthState {
   isAdmin: boolean;
 }
 
-const AUTHORIZED_ADMIN_EMAIL = 'mdhassan1738@gmail.com';
+const AUTHORIZED_ADMIN_EMAILS = ['mdhassan1738@gmail.com', 'alifraja404@gmail.com'];
 
 export function useAuthState(): AuthState {
   const [state, setState] = useState<AuthState>({
@@ -19,11 +19,11 @@ export function useAuthState(): AuthState {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // Check if user is logged in, email matches hardcoded admin limit, and email is verified
+      // Check if user is logged in, email matches any authorized email
       const isUserAdmin = !!(
         currentUser &&
         currentUser.email &&
-        currentUser.email.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()
+        AUTHORIZED_ADMIN_EMAILS.includes(currentUser.email.toLowerCase())
       );
 
       setState({

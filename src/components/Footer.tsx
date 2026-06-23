@@ -83,8 +83,8 @@ export default function Footer() {
           <div className="flex flex-col space-y-2.5">
             <Link to="/" className="flex items-center space-x-2 text-white">
               <img 
-                src="https://i.imgur.com/gFgShoZ.jpeg" 
-                alt="Current News Live Logo" 
+                src="https://i.imgur.com/gq2X5nE.jpeg" 
+                alt="Current News Logo" 
                 className="h-6 w-6 rounded-md object-cover border border-slate-700"
                 referrerPolicy="no-referrer"
               />

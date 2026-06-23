@@ -138,15 +138,48 @@ export default function HomeView() {
   const paginatedPosts = filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" id="homepage-view">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10" id="homepage-view">
+
+      {/* Category Filter Tabs positioned below the main header, above Today's Dispatch */}
+      <div className="sticky top-[72px] z-40 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/80 dark:bg-slate-900/95 dark:border-slate-800/80 py-2 mb-8 shadow-3xs px-4 -mx-4 sm:-mx-8 lg:-mx-8" id="category-filter-header">
+        <div className="max-w-7xl mx-auto flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto pb-0.5 scroll-smooth no-scrollbar" id="category-filter-tabs">
+          {['All', 'General', 'Politics', 'Tech', 'Sports', 'Opinion', 'Business', 'Health', 'World'].map((cat) => {
+            const count = posts.filter(p => {
+              const postCategory = p.category || 'General';
+              if (cat === 'All') return true;
+              return postCategory.toLowerCase() === cat.toLowerCase();
+            }).length;
+
+            const isSelected = selectedCategory === cat;
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`py-1.5 px-2.5 sm:px-3.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1 border-b-2 -mb-px hover:text-slate-900 dark:hover:text-slate-100 ${
+                  isSelected 
+                    ? 'bg-amber-100/60 text-amber-950 border-amber-600/80 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-500 rounded-t-lg' 
+                    : 'bg-transparent border-transparent text-slate-400 dark:text-slate-500 hover:border-slate-350'
+                }`}
+                id={`cat-tab-${cat.toLowerCase()}`}
+              >
+                <span>{cat === 'All' ? 'All' : cat}</span>
+                <span className={`text-[9px] font-mono font-bold px-1 py-0.5 rounded-full ${isSelected ? 'bg-amber-200 text-amber-950 dark:bg-amber-900/60 dark:text-amber-300' : 'bg-slate-200/60 dark:bg-slate-900 text-slate-500'}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       
       {/* Editorial Headline Hero Banner */}
-      <div className="border-b-4 border-double border-slate-900 pb-10 mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="border-b-4 border-double border-slate-900 pb-10 mb-10 pt-6 sm:pt-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <span className="text-xs font-mono font-bold text-indigo-600 uppercase tracking-widest block mb-2">Today's Dispatch</span>
           <h1 className="font-display font-extrabold text-4xl sm:text-5xl text-slate-950 tracking-tight leading-none flex items-center gap-3">
             <Newspaper className="h-10 w-10 text-slate-900 shrink-0" />
-            <span>CURRENT NEWS LIVE</span>
+            <span>CURRENT NEWS</span>
           </h1>
           <p className="text-sm text-slate-500 mt-3 font-sans max-w-xl">
             Read critical, up-to-date insights, independent coverages, and reports of global scale from our field editors.
@@ -247,41 +280,7 @@ export default function HomeView() {
              })}
            </div>
          </div>
-      )}
-
-      {/* Category Filter Tabs with dynamic soft cream selection and bottom line indicator */}
-      <div className="sticky top-[72px] z-40 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/80 dark:bg-slate-900/95 dark:border-slate-800/80 py-2 mb-8 shadow-3xs px-4 -mx-4 sm:-mx-8 lg:-mx-8" id="category-filter-header">
-        <div className="max-w-7xl mx-auto flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto pb-0.5 scroll-smooth no-scrollbar" id="category-filter-tabs">
-          {['All', 'General', 'Politics', 'Tech', 'Sports', 'Opinion', 'Business', 'Health', 'World'].map((cat) => {
-            // Count matching posts for this specific category (taking into account loaded posts)
-            const count = posts.filter(p => {
-              const postCategory = p.category || 'General';
-              if (cat === 'All') return true;
-              return postCategory.toLowerCase() === cat.toLowerCase();
-            }).length;
-
-            const isSelected = selectedCategory === cat;
-
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`py-1.5 px-2.5 sm:px-3.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1 border-b-2 -mb-px hover:text-slate-900 dark:hover:text-slate-100 ${
-                  isSelected 
-                    ? 'bg-amber-100/60 text-amber-950 border-amber-600/80 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-500 rounded-t-lg' 
-                    : 'bg-transparent border-transparent text-slate-400 dark:text-slate-500 hover:border-slate-350'
-                }`}
-                id={`cat-tab-${cat.toLowerCase()}`}
-              >
-                <span>{cat === 'All' ? 'All' : cat}</span>
-                <span className={`text-[9px] font-mono font-bold px-1 py-0.5 rounded-full ${isSelected ? 'bg-amber-200 text-amber-950 dark:bg-amber-900/60 dark:text-amber-300' : 'bg-slate-200/60 dark:bg-slate-900 text-slate-500'}`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+       )}
 
       {/* Main Content Area */}
       {loading ? (

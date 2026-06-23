@@ -144,8 +144,8 @@ export default function PostDetailView() {
     }
 
     const currentUrl = window.location.href;
-    const postKeywords = `current news live, news, independent ledger, journalism, ${post.category || 'general'}, ${post.title.toLowerCase().split(' ').slice(0, 6).join(', ')}`;
-    const siteLogo = 'https://i.imgur.com/gFgShoZ.jpeg';
+    const postKeywords = `current news, news, independent ledger, journalism, ${post.category || 'general'}, ${post.title.toLowerCase().split(' ').slice(0, 6).join(', ')}`;
+    const siteLogo = 'https://i.imgur.com/gq2X5nE.jpeg';
     const mainImg = post.imageUrl || siteLogo;
 
     // 2. Base SEO Tags & Mappings to Firestore Data
@@ -538,8 +538,8 @@ export default function PostDetailView() {
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-sans mt-6">
               <div className="flex items-center space-x-2.5">
                 <img 
-                  src="https://i.imgur.com/gFgShoZ.jpeg" 
-                  alt="Current News Live Avatar" 
+                  src="https://i.imgur.com/gq2X5nE.jpeg" 
+                  alt="Current News Avatar" 
                   className="h-9 w-9 rounded-full object-cover border border-slate-200/80 shadow-xs"
                   referrerPolicy="no-referrer"
                 />

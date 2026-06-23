@@ -190,7 +190,7 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
       <div className="px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-3 border-t border-slate-100 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <img 
-            src="https://i.imgur.com/gFgShoZ.jpeg" 
+            src="https://i.imgur.com/gq2X5nE.jpeg" 
             alt="Author DP" 
             className="h-6 w-6 rounded-full object-cover border border-slate-200"
             referrerPolicy="no-referrer"

@@ -11,6 +11,7 @@ import ConsentBanner from './components/ConsentBanner';
 import HomeView from './views/HomeView';
 import PostDetailView from './views/PostDetailView';
 import AdminView from './views/AdminView';
+import LikedView from './views/LikedView';
 
 import { useLocation } from 'react-router-dom';
 
@@ -61,6 +62,9 @@ export default function App() {
 
             {/* 3. Secure Admin Panel */}
             <Route path="/admin" element={<AdminView />} />
+
+            {/* 4. Liked Dispatches Page */}
+            <Route path="/liked" element={<LikedView />} />
             
             {/* Fallback route back to home */}
             <Route path="*" element={<HomeView />} />

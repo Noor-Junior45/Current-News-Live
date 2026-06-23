@@ -1,14 +1,34 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { auth } from '../firebase';
 import { useAuthState } from '../hooks/useAuthState';
-import { LogIn, LogOut, Shield, Newspaper, User, Rss, ArrowRight, PlusCircle, Users } from 'lucide-react';
+import { LogIn, LogOut, Shield, Newspaper, User, Rss, ArrowRight, PlusCircle, Users, Search, ThumbsUp } from 'lucide-react';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
 export default function Header() {
   const { user, loading, isAdmin } = useAuthState();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const [headerSearch, setHeaderSearch] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Sync search input with URL search param
+  useEffect(() => {
+    setHeaderSearch(searchParams.get('search') || '');
+  }, [searchParams]);
+
+  // Handle escape key to close search pop-up overlay
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogin = async () => {
     try {
@@ -38,14 +58,14 @@ export default function Header() {
         {/* Brand Logo & Name */}
         <Link to="/" className="flex items-center space-x-2.5 sm:space-x-3 text-slate-900 hover:opacity-90 transition-opacity min-w-0" id="header-brand-link">
           <img 
-            src="https://i.imgur.com/gFgShoZ.jpeg" 
-            alt="Current News Live Logo" 
+            src="https://i.imgur.com/gq2X5nE.jpeg" 
+            alt="Current News Logo" 
             className="h-9 w-9 sm:h-11 sm:w-11 rounded-lg object-cover border border-slate-200 shrink-0"
             referrerPolicy="no-referrer"
           />
           <div className="flex flex-col min-w-0">
-            <span className="font-display font-bold text-base sm:text-lg md:text-xl tracking-tight leading-none uppercase text-slate-950 truncate max-w-[140px] xs:max-w-[180px] sm:max-w-none">
-              Current News Live
+            <span className="font-display font-bold text-base sm:text-lg md:text-xl tracking-tight leading-none uppercase text-slate-950">
+              Current News
             </span>
             <span className="text-[9px] sm:text-[10px] text-slate-500 font-semibold font-mono uppercase tracking-wider truncate">
               Independent Ledger
@@ -54,7 +74,17 @@ export default function Header() {
         </Link>
 
         {/* Global Action Controls */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2.5 sm:space-x-4">
+          
+          {/* Elegant Magnifying Glass Button triggers overlay like YouTube */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="p-2 sm:p-2.5 rounded-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+            id="header-search-trigger"
+            title="Open dispatch search panel"
+          >
+            <Search className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+          </button>
           
           <div className="relative" id="header-profile-dropdown-container">
             {/* Click catcher overlay when dropdown is open */}
@@ -207,6 +237,24 @@ export default function Header() {
                       </a>
                     </div>
 
+                    {/* ❤️ Dynamic Liked Articles Link Button */}
+                    <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-3 mt-2 text-left" id="liked-posts-history-container">
+                      <Link
+                        to="/liked"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100/40 dark:border-rose-900/40 hover:border-rose-300 dark:hover:border-rose-800/80 text-slate-800 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
+                        id="liked-dispatches-button"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <ThumbsUp className="h-4 w-4 text-rose-500 fill-rose-100 dark:fill-rose-950" />
+                          <span className="text-xs font-semibold">My Liked Dispatches</span>
+                        </div>
+                        <span className="text-[10px] font-mono leading-none bg-rose-105 dark:bg-rose-900/60 text-rose-700 px-1.5 py-0.5 rounded-full font-bold">
+                          History →
+                        </span>
+                      </Link>
+                    </div>
+
                     <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-4 mt-1">
                       <button 
                         onClick={handleLogout}
@@ -240,12 +288,25 @@ export default function Header() {
                       <span>Admin Sign In</span>
                     </button>
 
-                    <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-center">
+                    <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col gap-2.5">
+                      <Link
+                        to="/liked"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-slate-800 dark:text-slate-200 hover:text-rose-700 transition-all cursor-pointer text-xs font-semibold border border-slate-150 dark:border-slate-800"
+                        id="liked-dispatches-guest-button"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <ThumbsUp className="h-3.5 w-3.5 text-rose-500 fill-rose-150" />
+                          <span>My Liked Dispatches</span>
+                        </div>
+                        <span className="text-[9px] text-slate-450 font-mono">View →</span>
+                      </Link>
+
                       <a 
                         href="/rss.xml" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-[10px] text-amber-600 hover:text-amber-700 font-semibold font-mono uppercase tracking-wide flex items-center gap-1 hover:underline"
+                        className="text-[10px] text-amber-600 hover:text-amber-700 font-semibold font-mono uppercase tracking-wide flex items-center justify-center gap-1 hover:underline"
                         onClick={() => setIsDropdownOpen(false)}
                       >
                         <Rss className="h-3 w-3" /> Get RSS Feed XML
@@ -260,6 +321,126 @@ export default function Header() {
         </div>
 
       </div>
+
+      {/* YouTube-style Search Overlay Pop-up Modal */}
+      {isSearchOpen && (
+        <div 
+          className="fixed inset-0 z-55 bg-[#faf8f2]/98 dark:bg-[#121211]/98 backdrop-blur-md flex flex-col pt-16 sm:pt-24 px-4 sm:px-6 transition-all duration-300"
+          id="search-overlay"
+        >
+          {/* Inner Search Box */}
+          <div className="max-w-2xl w-full mx-auto" id="search-modal-box">
+            <div className="flex items-center justify-between border-b-2 border-amber-900/10 dark:border-slate-800 pb-3 mb-6">
+              <h3 className="font-display font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-widest flex items-center gap-2">
+                <Search className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <span>Search Chronicles</span>
+              </h3>
+              <button
+                onClick={() => setIsSearchOpen(false)}
+                className="p-1 px-3 bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white rounded-lg font-mono text-xs font-black transition-all cursor-pointer shadow-3xs"
+                title="Close search [Esc]"
+              >
+                ESC ×
+              </button>
+            </div>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                navigate(`/?search=${encodeURIComponent(headerSearch)}`);
+                if (location.pathname === '/' || location.pathname === '') {
+                  const nextParams = new URLSearchParams(searchParams);
+                  if (!headerSearch) {
+                    nextParams.delete('search');
+                  } else {
+                    nextParams.set('search', headerSearch);
+                  }
+                  setSearchParams(nextParams);
+                }
+                setIsSearchOpen(false);
+              }}
+              className="relative w-full mb-8 animate-fade-in"
+            >
+              <input
+                type="text"
+                placeholder="Search report titles, tags, or topics..."
+                autoFocus
+                value={headerSearch}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setHeaderSearch(val);
+                  if (location.pathname === '/' || location.pathname === '') {
+                    const nextParams = new URLSearchParams(searchParams);
+                    if (!val) {
+                      nextParams.delete('search');
+                    } else {
+                      nextParams.set('search', val);
+                    }
+                    setSearchParams(nextParams);
+                  }
+                }}
+                className="w-full pl-12 pr-12 py-3.5 text-base sm:text-lg rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-600 dark:focus:ring-indigo-500/30 transition-all placeholder-slate-400 font-medium"
+                id="overlay-search-input"
+              />
+              <Search className="absolute left-4 top-4.5 h-5 w-5 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              {headerSearch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHeaderSearch('');
+                    if (location.pathname === '/' || location.pathname === '') {
+                      const nextParams = new URLSearchParams(searchParams);
+                      nextParams.delete('search');
+                      setSearchParams(nextParams);
+                    }
+                  }}
+                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-white font-bold"
+                >
+                  ×
+                </button>
+              )}
+            </form>
+
+            {/* Suggested Popular Topics */}
+            <div>
+              <h4 className="text-[10px] font-mono font-bold tracking-widest text-slate-500 dark:text-slate-450 uppercase mb-4">
+                Popular Search Terms
+              </h4>
+              <div className="flex flex-wrap gap-2.5" id="search-suggested-topics">
+                {[
+                  'Politics',
+                  'Finance',
+                  'Technology',
+                  'Artificial Intelligence',
+                  'Climate Emergency',
+                  'Global Affairs',
+                  'Elections',
+                  'Sports Dispatches',
+                  'Wall Street'
+                ].map((topic) => (
+                  <button
+                    key={topic}
+                    type="button"
+                    onClick={() => {
+                      setHeaderSearch(topic);
+                      navigate(`/?search=${encodeURIComponent(topic)}`);
+                      if (location.pathname === '/' || location.pathname === '') {
+                        const nextParams = new URLSearchParams(searchParams);
+                        nextParams.set('search', topic);
+                        setSearchParams(nextParams);
+                      }
+                      setIsSearchOpen(false);
+                    }}
+                    className="px-4 py-2.5 text-xs font-semibold bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white rounded-xl border border-slate-205 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-3xs cursor-pointer transition-all active:scale-98"
+                  >
+                    <span className="text-amber-600 dark:text-amber-500 font-bold mr-1">#</span>{topic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
