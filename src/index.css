@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", sans-serif;
@@ -151,8 +153,7 @@ html.dark .bg-white,
 html.dark [id^="post-card-"],
 html.dark #story-form-section > div,
 html.dark #admin-board-view .bg-white,
-html.dark #homepage-view .bg-white,
-html.dark #article-content {
+html.dark #homepage-view .bg-white {
   background-color: #1e293b !important;
   color: #f8fafc !important;
   border-color: #334155 !important;
@@ -245,5 +246,161 @@ html.dark .ql-snow .ql-picker {
   opacity: 0.95;
   transform: scale(1.008);
 }
+
+/* Premium Physical Newspaper Paper Style - Applied in any mode */
+.newspaper-paper,
+html.dark .newspaper-paper,
+#app-root-container .newspaper-paper,
+html.dark [id^="post-card-"].newspaper-paper,
+html.dark #article-main-box.newspaper-paper,
+html.dark #related-articles-section .newspaper-paper {
+  background-color: #faf6eb !important;
+  color: #1c1917 !important; /* Deep charcoal for perfect reading contrast */
+  border-color: #e7e5e4 !important;
+  box-shadow: 0 4px 6px -1px rgba(28, 25, 23, 0.05), 0 2px 4px -2px rgba(28, 25, 23, 0.05) !important;
+}
+
+/* Ensure all headers, texts, and links inside the newspaper block remain dark in any mode */
+.newspaper-paper h1,
+.newspaper-paper h2,
+.newspaper-paper h3,
+.newspaper-paper h4,
+.newspaper-paper h5,
+.newspaper-paper h6,
+.newspaper-paper p,
+.newspaper-paper span,
+.newspaper-paper a,
+.newspaper-paper div,
+.newspaper-paper li,
+.newspaper-paper strong,
+.newspaper-paper em,
+html.dark .newspaper-paper h1,
+html.dark .newspaper-paper h2,
+html.dark .newspaper-paper h3,
+html.dark .newspaper-paper h4,
+html.dark .newspaper-paper h5,
+html.dark .newspaper-paper h6,
+html.dark .newspaper-paper p,
+html.dark .newspaper-paper span,
+html.dark .newspaper-paper a,
+html.dark .newspaper-paper div,
+html.dark .newspaper-paper li,
+html.dark .newspaper-paper strong,
+html.dark .newspaper-paper em,
+html.dark [id^="post-card-"].newspaper-paper h3,
+html.dark [id^="post-card-"].newspaper-paper p,
+html.dark [id^="post-card-"].newspaper-paper span,
+html.dark [id^="post-card-"].newspaper-paper a,
+html.dark [id^="post-card-"].newspaper-paper div {
+  color: #1c1917 !important;
+}
+
+/* Specific exceptions for secondary or muted texts inside newspaper paper */
+.newspaper-paper .text-slate-500,
+.newspaper-paper .text-slate-400,
+.newspaper-paper .text-slate-450,
+.newspaper-paper .text-slate-550,
+html.dark .newspaper-paper .text-slate-500,
+html.dark .newspaper-paper .text-slate-400,
+html.dark .newspaper-paper .text-slate-450,
+html.dark .newspaper-paper .text-slate-550 {
+  color: #57534e !important; /* Stone-600 / Muted newspaper ink */
+}
+
+/* Ensure standard links (like "Read Full Article") hover elegantly */
+.newspaper-paper a:hover,
+html.dark .newspaper-paper a:hover {
+  color: #4f46e5 !important; /* Indigo hover */
+}
+
+/* Override rich text within newspaper view */
+.newspaper-paper .article-rich-text p,
+.newspaper-paper .article-rich-text li,
+html.dark .newspaper-paper .article-rich-text p,
+html.dark .newspaper-paper .article-rich-text li {
+  color: #292524 !important; /* Stone-800 for high-quality book text print */
+}
+
+/* Buttons, sharing links and reactions inside newspaper paper */
+.newspaper-paper button,
+html.dark .newspaper-paper button,
+.newspaper-paper .share-btn,
+html.dark .newspaper-paper .share-btn {
+  background-color: #f5f2eb !important;
+  color: #44403c !important;
+  border: 1px solid #e7e5e4 !important;
+}
+
+.newspaper-paper button:hover,
+html.dark .newspaper-paper button:hover,
+.newspaper-paper .share-btn:hover,
+html.dark .newspaper-paper .share-btn:hover {
+  background-color: #e7e5e4 !important;
+  color: #1c1917 !important;
+}
+
+/* Category badges inside newspaper paper */
+.newspaper-paper .bg-slate-100,
+html.dark .newspaper-paper .bg-slate-100,
+.newspaper-paper .bg-slate-50,
+html.dark .newspaper-paper .bg-slate-50 {
+  background-color: #eae6db !important;
+  color: #44403c !important;
+  border-color: #d6d3d1 !important;
+}
+
+/* Custom reactions highlights inside newspaper paper */
+.newspaper-paper .bg-emerald-50,
+html.dark .newspaper-paper .bg-emerald-50 {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #10b981 !important;
+}
+
+.newspaper-paper .bg-rose-50,
+html.dark .newspaper-paper .bg-rose-50 {
+  background-color: #ffe4e6 !important;
+  color: #9f1239 !important;
+  border-color: #f43f5e !important;
+}
+
+/* Custom embeds box and external links inside newspaper */
+.newspaper-paper #custom-embeds-box,
+html.dark .newspaper-paper #custom-embeds-box {
+  background-color: #f3eedd !important; /* Slightly deeper cream for container depth */
+  border-color: #e2dbbe !important;
+}
+
+.newspaper-paper #custom-embeds-box a,
+html.dark .newspaper-paper #custom-embeds-box a {
+  background-color: #faf6eb !important; /* Authentic newspaper paper cream */
+  border-color: #e2dbbe !important;
+  color: #1c1917 !important;
+}
+
+.newspaper-paper #custom-embeds-box a:hover,
+html.dark .newspaper-paper #custom-embeds-box a:hover {
+  background-color: #fcfbf7 !important;
+  border-color: #a8a29e !important;
+}
+
+.newspaper-paper #custom-embeds-box .text-slate-800,
+html.dark .newspaper-paper #custom-embeds-box .text-slate-800,
+.newspaper-paper #custom-embeds-box .text-indigo-600,
+html.dark .newspaper-paper #custom-embeds-box .text-indigo-600 {
+  color: #1c1917 !important;
+}
+
+.newspaper-paper #custom-embeds-box .text-slate-400,
+html.dark .newspaper-paper #custom-embeds-box .text-slate-400 {
+  color: #57534e !important; /* Muted stone ink */
+}
+
+.newspaper-paper #custom-embeds-box .bg-indigo-50,
+html.dark .newspaper-paper #custom-embeds-box .bg-indigo-50 {
+  background-color: #eae6db !important;
+  color: #44403c !important;
+}
+
 
 

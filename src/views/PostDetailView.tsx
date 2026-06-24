@@ -537,89 +537,90 @@ export default function PostDetailView() {
   const dynamicShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/?post=${post.id}` : `https://currentnewslive.vercel.app/?post=${post.id}`;
 
   return (
-    <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id={`article-${post.id}`}>
-      
-      {/* Editorial Breadcrumbs & Back Trigger */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="breadcrumbs-header">
-        <nav className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          <Link 
-            to="/" 
-            className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-          >
-            Home
-          </Link>
-          <span className="text-slate-300 dark:text-slate-700 font-normal">/</span>
-          <Link 
-            to={`/?category=${encodeURIComponent(post.category || 'General')}`} 
-            className="hover:text-indigo-600 text-indigo-500 dark:hover:text-indigo-400 dark:text-indigo-400 transition-colors"
-          >
-            {post.category || 'General'}
-          </Link>
-          <span className="text-slate-300 dark:text-slate-700 font-normal">/</span>
-          <span className="text-slate-800 dark:text-slate-200 font-bold truncate max-w-[150px] xs:max-w-[200px] sm:max-w-xs md:max-w-md">
-            Current dispatch
-          </span>
-        </nav>
-        <span className="text-[10px] bg-slate-100 text-slate-600 dark:bg-slate-900/60 dark:text-slate-400 font-bold font-mono px-2.5 py-1 rounded-sm uppercase tracking-widest shrink-0 self-start sm:self-auto">
-          Independent Edition
-        </span>
-      </div>
-
-      {isOfflineCached && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/60 rounded-xl p-3 px-4 mb-6 flex items-center gap-2.5 text-amber-900 dark:text-amber-200 text-xs font-medium" id="offline-banner">
-          <WifiOff className="h-4 w-4 text-amber-500 shrink-0 animate-pulse" />
-          <span><strong>Offline Mode:</strong> Viewing a saved copy of this dispatch retrieved from local memory. Please reconnect to view live updates and submit ratings.</span>
-        </div>
-      )}
-
-      {/* ⚠️ AD PLACEMENT: Leaderboard top cover */}
-      <AdSpace type="leaderboard" />
-
-      {/* Main Grid: Left for article detail, Right for sticky sidebar banner */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 mt-8">
+    <div className="newspaper-paper w-full min-h-screen" id={`article-page-outer-container-${post.id}`}>
+      <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id={`article-${post.id}`}>
         
-        {/* Left main area: takes 3/4 layout */}
-        <div className="lg:col-span-3">
+        {/* Editorial Breadcrumbs & Back Trigger */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="breadcrumbs-header">
+          <nav className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-stone-600">
+            <Link 
+              to="/" 
+              className="hover:text-stone-900 transition-colors"
+            >
+              Home
+            </Link>
+            <span className="text-stone-400 font-normal">/</span>
+            <Link 
+              to={`/?category=${encodeURIComponent(post.category || 'General')}`} 
+              className="hover:text-indigo-600 text-indigo-500 transition-colors"
+            >
+              {post.category || 'General'}
+            </Link>
+            <span className="text-stone-400 font-normal">/</span>
+            <span className="text-stone-900 font-extrabold truncate max-w-[150px] xs:max-w-[200px] sm:max-w-xs md:max-w-md">
+              Current dispatch
+            </span>
+          </nav>
+          <span className="text-[10px] bg-stone-200 text-stone-700 font-bold font-mono px-2.5 py-1 rounded-sm uppercase tracking-widest shrink-0 self-start sm:self-auto">
+            Independent Edition
+          </span>
+        </div>
+
+        {isOfflineCached && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/60 rounded-xl p-3 px-4 mb-6 flex items-center gap-2.5 text-amber-900 dark:text-amber-200 text-xs font-medium" id="offline-banner">
+            <WifiOff className="h-4 w-4 text-amber-500 shrink-0 animate-pulse" />
+            <span><strong>Offline Mode:</strong> Viewing a saved copy of this dispatch retrieved from local memory. Please reconnect to view live updates and submit ratings.</span>
+          </div>
+        )}
+
+        {/* ⚠️ AD PLACEMENT: Leaderboard top cover */}
+        <AdSpace type="leaderboard" />
+
+        {/* Main Grid: Left for article detail, Right for sticky sidebar banner */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 mt-8">
           
-          {/* Article Header */}
-          <header className="border-b border-slate-200 pb-6 mb-8">
-            <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-slate-950 tracking-tight leading-tight mb-4">
-              {post.title}
-            </h1>
+          {/* Left main area: takes 3/4 layout */}
+          <div className="lg:col-span-3">
+            
+            {/* Article Header */}
+            <header className="border-b border-stone-300 pb-6 mb-8">
+              <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-stone-900 tracking-tight leading-tight mb-4">
+                {post.title}
+              </h1>
 
-            {/* Author Meta */}
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-sans mt-6">
-              <div className="flex items-center space-x-2.5">
-                <img 
-                  src="https://i.imgur.com/gq2X5nE.jpeg" 
-                  alt="Current News Avatar" 
-                  className="h-9 w-9 rounded-full object-cover border border-slate-200/80 shadow-xs"
-                  referrerPolicy="no-referrer"
-                />
-                <div>
-                  <span className="font-semibold text-slate-900 block leading-tight">
-                    {post.authorName || globalPenName || 'Chronicle Staff Report'}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono tracking-wider flex items-center gap-1 uppercase">
-                    <Award className="h-3 w-3 text-amber-500" /> Ground Journalism
-                  </span>
+              {/* Author Meta */}
+              <div className="flex flex-wrap items-center gap-4 text-xs text-stone-600 font-sans mt-6">
+                <div className="flex items-center space-x-2.5">
+                  <img 
+                    src="https://i.imgur.com/gq2X5nE.jpeg" 
+                    alt="Current News Avatar" 
+                    className="h-9 w-9 rounded-full object-cover border border-stone-350 shadow-xs"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div>
+                    <span className="font-semibold text-stone-900 block leading-tight">
+                      {post.authorName || globalPenName || 'Chronicle Staff Report'}
+                    </span>
+                    <span className="text-[10px] text-stone-500 font-mono tracking-wider flex items-center gap-1 uppercase">
+                      <Award className="h-3 w-3 text-amber-500" /> Ground Journalism
+                    </span>
+                  </div>
                 </div>
+
+                <div className="h-4 w-px bg-stone-300 hidden sm:block" />
+
+                <span className="flex items-center space-x-1">
+                  <Calendar className="h-4 w-4 text-stone-500" />
+                  <span>{publishDate}</span>
+                </span>
+
+                <div className="h-4 w-px bg-stone-300 hidden sm:block" />
+
+                <span className="flex items-center space-x-1">
+                  <Clock className="h-4 w-4 text-stone-500" />
+                  <span>3 min read</span>
+                </span>
               </div>
-
-              <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-
-              <span className="flex items-center space-x-1">
-                <Calendar className="h-4 w-4 text-slate-400" />
-                <span>{publishDate}</span>
-              </span>
-
-              <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-
-              <span className="flex items-center space-x-1">
-                <Clock className="h-4 w-4 text-slate-400" />
-                <span>3 min read</span>
-              </span>
-            </div>
 
             {/* Share action bar */}
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
@@ -664,13 +665,13 @@ export default function PostDetailView() {
                   href={`https://x.com/intent/tweet?url=${encodeURIComponent(dynamicShareUrl)}&text=${encodeURIComponent(post.title)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-150 hover:bg-slate-200 text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  className="share-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   title="Share on X"
                 >
                   <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
-                  <span>X</span>
+                  <span>Post</span>
                 </a>
 
                 {/* WhatsApp Share */}
@@ -678,7 +679,7 @@ export default function PostDetailView() {
                   href={`https://api.whatsapp.com/send?text=${encodeURIComponent(post.title + ' ' + dynamicShareUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 dark:text-emerald-400 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  className="share-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   title="Share on WhatsApp"
                 >
                   <Send className="h-3.5 w-3.5" />
@@ -688,13 +689,13 @@ export default function PostDetailView() {
                 {/* Copy Link */}
                 <button
                   onClick={handleCopyLink}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  className="share-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   title="Copy Link to Clipboard"
                 >
                   {copied ? (
                     <>
-                      <Check className="h-3.5 w-3.5 text-emerald-500 animate-bounce" />
-                      <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                      <Check className="h-3.5 w-3.5 text-emerald-600 animate-bounce" />
+                      <span className="text-emerald-700">Copied!</span>
                     </>
                   ) : (
                     <>
@@ -709,7 +710,7 @@ export default function PostDetailView() {
 
           {/* Clean Rendered HTML Article Body & Embed Handler in same box */}
           <div 
-            className="bg-white rounded-2xl border border-slate-100 shadow-xs p-6 sm:p-10 overflow-hidden" 
+            className="newspaper-paper rounded-2xl border border-slate-100 shadow-xs p-6 sm:p-10 overflow-hidden" 
             id="article-main-box"
             onClick={(e) => {
               const target = e.target as HTMLElement;
@@ -811,11 +812,11 @@ export default function PostDetailView() {
             <AdSpace type="sidebar" />
 
             {/* Additional informational widgets */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
-              <h4 className="font-display font-extrabold text-sm text-slate-950 uppercase tracking-widest border-b border-slate-100 pb-3 mb-3">
+            <div className="bg-stone-100/40 border border-stone-250/60 rounded-xl p-5 shadow-3xs">
+              <h4 className="font-display font-extrabold text-sm text-stone-900 uppercase tracking-widest border-b border-stone-200/50 pb-3 mb-3">
                 Editorial Disclaimer
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-xs text-stone-600 leading-relaxed font-sans">
                 The views, positions, and contents disclosed inside this publication correspond directly to raw press reportings and are filed on our secure servers under autonomous, zero-bias journalism guidelines.
               </p>
             </div>
@@ -827,8 +828,8 @@ export default function PostDetailView() {
 
       {/* Related Articles Section */}
       {relatedPosts.length > 0 && (
-        <div className="mt-16 pt-10 border-t border-slate-200" id="related-articles-section">
-          <h3 className="font-display font-extrabold text-xl text-slate-900 dark:text-white uppercase tracking-wider mb-8 flex items-center gap-2">
+        <div className="mt-16 pt-10 border-t border-stone-300" id="related-articles-section">
+          <h3 className="font-display font-extrabold text-xl text-stone-900 uppercase tracking-wider mb-8 flex items-center gap-2">
             <span className="w-2.5 h-6 bg-indigo-650 rounded-sm"></span>
             <span>Related Coverage</span>
           </h3>
@@ -837,7 +838,7 @@ export default function PostDetailView() {
               <Link
                 key={relatedPost.id}
                 to={`/post/${relatedPost.id}/${slugify(relatedPost.title)}`}
-                className="group flex flex-col bg-white hover:bg-slate-50/40 border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-3xs hover:shadow-xs transition-all duration-200"
+                className="group flex flex-col newspaper-paper hover:bg-stone-50 border border-stone-200 hover:border-stone-300 rounded-2xl p-6 shadow-3xs hover:shadow-xs transition-all duration-200"
               >
                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 block mb-2 font-mono">
                   {relatedPost.category || 'General'}
@@ -908,6 +909,7 @@ export default function PostDetailView() {
         </div>
       )}
 
-    </article>
+      </article>
+    </div>
   );
 }

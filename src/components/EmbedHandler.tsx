@@ -83,10 +83,6 @@ export default function EmbedHandler({ youtubeUrl, facebookUrl, customLinks, isH
 
   return (
     <div className={isHeader ? "mb-8 pb-8 border-b border-slate-200" : "mt-12 pt-8 border-t border-slate-200"} id="embeds-section">
-      <h3 className="font-display font-bold text-lg text-slate-900 mb-6 uppercase tracking-wider flex items-center space-x-2">
-        <span>Media & Social References</span>
-      </h3>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* YouTube Video Embed */}
         {hasYouTube && (
@@ -160,7 +156,7 @@ export default function EmbedHandler({ youtubeUrl, facebookUrl, customLinks, isH
           <div className="col-span-1 md:col-span-2 flex flex-col bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-2xs" id="custom-embeds-box">
             <div className="flex items-center space-x-2 text-indigo-600 mb-4 pb-2 border-b border-slate-200/65">
               <Link2 className="h-5 w-5" />
-              <span className="text-xs font-semibold uppercase tracking-wider font-mono">External Context & Social embeds ({validCustomLinks.length})</span>
+              <span className="text-xs font-semibold uppercase tracking-wider font-mono">Links / References ({validCustomLinks.length})</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

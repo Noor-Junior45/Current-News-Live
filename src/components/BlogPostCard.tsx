@@ -132,7 +132,7 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
 
   return (
     <article 
-      className="group bg-white border border-slate-200 hover:border-slate-300 rounded-xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+      className="group newspaper-paper border border-slate-200 hover:border-slate-300 rounded-xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
       id={`post-card-${post.id}`}
     >
       <div className="p-4 sm:p-6">
