@@ -8,7 +8,7 @@ export interface AuthState {
   isAdmin: boolean;
 }
 
-const AUTHORIZED_ADMIN_EMAILS = ['mdhassan1738@gmail.com', 'alifraja404@gmail.com'];
+const AUTHORIZED_ADMIN_EMAILS = ['mdhassan1738@gmail.com', 'alifraja404@gmail.com','mdnoor4860@gmail.com'];
 
 export function useAuthState(): AuthState {
   const [state, setState] = useState<AuthState>({
