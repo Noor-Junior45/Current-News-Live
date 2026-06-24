@@ -1,0 +1,31 @@
+{
+  "name": "Current News Live",
+  "short_name": "Current News",
+  "description": "The independent ledger delivering premium uncorrupted journalism, real-time investigative disclosures, opinion dispatches, and geopolitical analysis.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf8f2",
+  "theme_color": "#121211",
+  "orientation": "any",
+  "categories": ["news", "politics", "journalism"],
+  "icons": [
+    {
+      "src": "https://i.imgur.com/gFgShoZ.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.imgur.com/gFgShoZ.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.imgur.com/gFgShoZ.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}
