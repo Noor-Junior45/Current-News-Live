@@ -1,9 +1,60 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { auth } from '../firebase';
+import { db, auth } from '../firebase';
+import { collection, addDoc, query, where, getDocs, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { useAuthState } from '../hooks/useAuthState';
-import { LogIn, LogOut, Shield, Newspaper, User, Rss, ArrowRight, PlusCircle, Users, Search, ThumbsUp, X } from 'lucide-react';
+import { 
+  LogIn, 
+  LogOut, 
+  Shield, 
+  Newspaper, 
+  User, 
+  Rss, 
+  PlusCircle, 
+  Users, 
+  Search, 
+  ThumbsUp, 
+  X, 
+  Settings as SettingsIcon, 
+  Bell, 
+  Loader2 
+} from 'lucide-react';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+
+// Compact ToggleSwitch component matching the user's uploaded reference screenshot
+interface ToggleSwitchProps {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+}
+
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ checked, onChange, disabled = false }) => {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out select-none focus:outline-hidden disabled:opacity-60 shrink-0 ${
+        checked ? 'bg-purple-600' : 'bg-slate-400'
+      }`}
+    >
+      {/* Sliding handle */}
+      <span
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out absolute top-1 ${
+          checked ? 'translate-x-7' : 'translate-x-1'
+        }`}
+      />
+      {/* Label Text inside the pill switch */}
+      <span className={`absolute top-1 text-[8px] font-bold tracking-wider select-none leading-none flex items-center h-4 uppercase pointer-events-none ${
+        checked ? 'left-1.5 text-white' : 'right-1.5 text-slate-100'
+      }`}>
+        {checked ? 'ON' : 'OFF'}
+      </span>
+    </button>
+  );
+};
 
 export default function Header() {
   const { user, loading, isAdmin } = useAuthState();
@@ -13,6 +64,28 @@ export default function Header() {
   const location = useLocation();
   const [headerSearch, setHeaderSearch] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // --- Settings Modal State & Toggles ---
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  // Browser notifications preference state
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('browser_notifications_enabled') === 'true' && ('Notification' in window && Notification.permission === 'granted');
+  });
+
+  // PWA Add to Home Screen states
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isPwaInstalled, setIsPwaInstalled] = useState<boolean>(() => {
+    return window.matchMedia('(display-mode: standalone)').matches || localStorage.getItem('pwa_app_downloaded') === 'true';
+  });
+
+  // Newsletter subscription states
+  const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
+  const [subDocId, setSubDocId] = useState<string | null>(null);
+  const [isSubscribing, setIsSubscribing] = useState<boolean>(false);
+
+  // Personalized Ads consent states
+  const [adsConsent, setAdsConsent] = useState<'granted' | 'denied' | 'pending'>('pending');
 
   // Sync search input with URL search param
   useEffect(() => {
@@ -29,6 +102,251 @@ export default function Header() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Listen to PWA installation prompts
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandalone) {
+      setIsPwaInstalled(true);
+      localStorage.setItem('pwa_app_downloaded', 'true');
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  // Sync newsletter state from Firestore subscribers database
+  const checkSubscription = async () => {
+    if (!user || !user.email) {
+      setIsSubscribed(false);
+      setSubDocId(null);
+      return;
+    }
+
+    try {
+      const q = query(
+        collection(db, 'subscribers'),
+        where('email', '==', user.email.toLowerCase())
+      );
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        setIsSubscribed(true);
+        setSubDocId(querySnapshot.docs[0].id);
+      } else {
+        setIsSubscribed(false);
+        setSubDocId(null);
+      }
+    } catch (err) {
+      console.error('Error checking newsletter subscription', err);
+    }
+  };
+
+  useEffect(() => {
+    checkSubscription();
+  }, [user]);
+
+  // Synchronized storage change listener for instantly updating values between header & footer
+  useEffect(() => {
+    const handleSync = () => {
+      checkSubscription();
+      const val = localStorage.getItem('google_ads_personalized_consent');
+      setAdsConsent((val as 'granted' | 'denied') || 'pending');
+      setNotificationsEnabled(
+        localStorage.getItem('browser_notifications_enabled') === 'true' && 
+        ('Notification' in window && Notification.permission === 'granted')
+      );
+    };
+    
+    handleSync();
+    window.addEventListener('settings-updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    const interval = setInterval(handleSync, 1500);
+
+    return () => {
+      window.removeEventListener('settings-updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+      clearInterval(interval);
+    };
+  }, [user]);
+
+  // Toggle Browser notifications and PWA alert settings
+  const toggleNotifications = async () => {
+    if (!('Notification' in window)) {
+      alert("This browser does not support desktop notifications.");
+      return;
+    }
+
+    if (!notificationsEnabled) {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        localStorage.setItem('browser_notifications_enabled', 'true');
+        setNotificationsEnabled(true);
+        window.dispatchEvent(new Event('settings-updated'));
+        
+        // Push-style notification to trigger immediately
+        new Notification("Current News Alerts Enabled!", {
+          body: "You will now receive automated dispatches directly on this device.",
+          icon: "https://i.imgur.com/gq2X5nE.jpeg"
+        });
+
+        // Simulating push/alerts to those who have downloaded browser app
+        if (isPwaInstalled) {
+          setTimeout(() => {
+            new Notification("PWA App Connected!", {
+              body: "Simulated alert sent to your downloaded browser app.",
+              icon: "https://i.imgur.com/gq2X5nE.jpeg"
+            });
+          }, 1000);
+        }
+      } else {
+        alert("Notification permissions denied. Please enable notifications in your browser settings to activate this feature.");
+      }
+    } else {
+      localStorage.setItem('browser_notifications_enabled', 'false');
+      setNotificationsEnabled(false);
+      window.dispatchEvent(new Event('settings-updated'));
+    }
+  };
+
+  // Download Web App / Add to Home screen trigger
+  const installPwaApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsPwaInstalled(true);
+        localStorage.setItem('pwa_app_downloaded', 'true');
+        setDeferredPrompt(null);
+        window.dispatchEvent(new Event('settings-updated'));
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+          setTimeout(() => {
+            new Notification("Welcome to Home Screen App!", {
+              body: "Installation choice accepted. Autonomous shortcut registered successfully.",
+              icon: "https://i.imgur.com/gq2X5nE.jpeg"
+            });
+          }, 1500);
+        }
+      }
+    } else {
+      alert("App is already downloaded or direct installation is complete. You can add it to your Home Screen from your browser settings if on mobile.");
+    }
+  };
+
+  // Handle setting Ads consent
+  const handleSetAdsConsent = (value: 'granted' | 'denied') => {
+    localStorage.setItem('google_ads_personalized_consent', value);
+    setAdsConsent(value);
+    window.dispatchEvent(new Event('settings-updated'));
+    
+    if (window.hasOwnProperty('adsbygoogle')) {
+      try {
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).requestNonPersonalizedAds = value === 'granted' ? 0 : 1;
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  };
+
+  const toggleAdsConsent = () => {
+    const nextValue = adsConsent === 'granted' ? 'denied' : 'granted';
+    handleSetAdsConsent(nextValue);
+  };
+
+  // Handle newsletter subscribing from the settings panel
+  const handleNewsletterAction = async (target: 'subscribe' | 'unsubscribe') => {
+    if (!user) {
+      const confirmSignIn = window.confirm(
+        "To subscribe or unsubscribe from newsletter alerts, you must be logged in. Would you like to sign in with your Google account now?"
+      );
+      if (confirmSignIn) {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithPopup(auth, provider);
+        } catch (err) {
+          console.error("Popup sign in failed", err);
+        }
+      }
+      return;
+    }
+
+    setIsSubscribing(true);
+    try {
+      if (target === 'unsubscribe') {
+        if (subDocId) {
+          await deleteDoc(doc(db, 'subscribers', subDocId));
+        } else {
+          const q = query(
+            collection(db, 'subscribers'), 
+            where('email', '==', user.email.toLowerCase())
+          );
+          const snap = await getDocs(q);
+          for (const docItem of snap.docs) {
+            await deleteDoc(doc(db, 'subscribers', docItem.id));
+          }
+        }
+        setIsSubscribed(false);
+        setSubDocId(null);
+        window.dispatchEvent(new Event('settings-updated'));
+      } else {
+        const q = query(
+          collection(db, 'subscribers'), 
+          where('email', '==', user.email.toLowerCase())
+        );
+        const snap = await getDocs(q);
+        
+        let newDocId = null;
+        if (snap.empty) {
+          const newDocRef = await addDoc(collection(db, 'subscribers'), {
+            email: user.email.toLowerCase(),
+            createdAt: serverTimestamp()
+          });
+          newDocId = newDocRef.id;
+        } else {
+          newDocId = snap.docs[0].id;
+        }
+        
+        setIsSubscribed(true);
+        setSubDocId(newDocId);
+        window.dispatchEvent(new Event('settings-updated'));
+
+        // Send backend simulated welcome email
+        try {
+          await fetch('/api/mail/send-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: user.email,
+              title: "Welcome to Current News Alerts!",
+              link: window.location.origin
+            })
+          });
+        } catch (err) {
+          console.warn('Backend mail API offline:', err);
+        }
+      }
+    } catch (err) {
+      console.error('Newsletter settings sync failed:', err);
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
+  const handleToggleNewsletter = () => {
+    if (isSubscribed) {
+      handleNewsletterAction('unsubscribe');
+    } else {
+      handleNewsletterAction('subscribe');
+    }
+  };
 
   const handleLogin = async () => {
     try {
@@ -245,9 +563,26 @@ export default function Header() {
                           <span className="text-[10px] text-slate-400 font-normal">Subscribe with feed reader apps</span>
                         </div>
                       </a>
+
+                      {/* Settings Button - Located Below RSS Feed and Above Liked History */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsSettingsOpen(true);
+                        }}
+                        className="w-full flex items-center space-x-3 p-2.5 rounded-xl text-slate-700 hover:text-indigo-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-900 text-xs font-semibold tracking-wide transition-colors cursor-pointer text-left"
+                        id="settings-trigger-button"
+                      >
+                        <SettingsIcon className="h-4 w-4 text-purple-500 shrink-0" />
+                        <div className="flex flex-col text-left min-w-0">
+                          <span>Settings & Preferences</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Manage alerts, notifications and cookie policies</span>
+                        </div>
+                      </button>
                     </div>
 
-                    {/* ❤️ Dynamic Liked Articles Link Button */}
+                    {/* ❤️ Dynamic Liked Articles Link Button (Renamed to Liked History) */}
                     <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-3 mt-2 text-left" id="liked-posts-history-container">
                       <Link
                         to="/liked"
@@ -257,8 +592,8 @@ export default function Header() {
                       >
                         <ThumbsUp className="h-4 w-4 text-rose-550 shrink-0" />
                         <div className="flex flex-col text-left min-w-0">
-                          <span>My Liked Dispatches</span>
-                          <span className="text-[10px] text-slate-400 font-normal">Previously liked and bookmarked articles</span>
+                          <span>Liked History</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Previously liked history and bookmarks</span>
                         </div>
                       </Link>
                     </div>
@@ -296,7 +631,38 @@ export default function Header() {
                       <span>Sign In</span>
                     </button>
 
-                    <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col gap-2.5">
+                    <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col gap-2.5" id="guest-links-container">
+                      <a 
+                        href="/rss.xml" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center space-x-3 p-2.5 rounded-xl text-slate-700 hover:text-indigo-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-900 text-xs font-semibold tracking-wide transition-colors cursor-pointer"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <Rss className="h-4 w-4 text-amber-550 shrink-0" />
+                        <div className="flex flex-col text-left min-w-0">
+                          <span>Get RSS Feed XML</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Subscribe with feed reader apps</span>
+                        </div>
+                      </a>
+
+                      {/* Settings Button - Located Below RSS Feed and Above Liked History */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsSettingsOpen(true);
+                        }}
+                        className="w-full flex items-center space-x-3 p-2.5 rounded-xl text-slate-700 hover:text-indigo-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-900 text-xs font-semibold tracking-wide transition-colors cursor-pointer text-left"
+                        id="guest-settings-trigger-button"
+                      >
+                        <SettingsIcon className="h-4 w-4 text-purple-500 shrink-0" />
+                        <div className="flex flex-col text-left min-w-0">
+                          <span>Settings & Preferences</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Manage alerts, notifications and cookie policies</span>
+                        </div>
+                      </button>
+
                       <Link
                         to="/liked"
                         onClick={() => setIsDropdownOpen(false)}
@@ -305,20 +671,10 @@ export default function Header() {
                       >
                         <ThumbsUp className="h-4 w-4 text-rose-550 shrink-0" />
                         <div className="flex flex-col text-left min-w-0">
-                          <span>My Liked Dispatches</span>
-                          <span className="text-[10px] text-slate-400 font-normal">Previously liked and bookmarked articles</span>
+                          <span>Liked History</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Previously liked history and bookmarks</span>
                         </div>
                       </Link>
-
-                      <a 
-                        href="/rss.xml" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-amber-600 hover:text-amber-700 font-semibold font-mono uppercase tracking-wide flex items-center justify-center gap-1 hover:underline"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        <Rss className="h-3 w-3" /> Get RSS Feed XML
-                      </a>
                     </div>
                   </div>
                 )}
@@ -329,6 +685,122 @@ export default function Header() {
         </div>
 
       </div>
+
+      {/* Preferences & Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-55 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-fade-in" id="settings-modal-overlay">
+          {/* Click outside to close */}
+          <div className="absolute inset-0" onClick={() => setIsSettingsOpen(false)} />
+          
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-950 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-2xl p-6 sm:p-8 z-10 animate-scale-up" id="settings-modal-card">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-full transition-colors cursor-pointer z-10"
+              title="Close Settings"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="mb-6 text-left">
+              <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5 text-purple-500" />
+                <span>Preferences & Settings</span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Customize reading preferences, browser alerts, and data policies.
+              </p>
+            </div>
+
+            {/* List of Toggles - BORDERLESS */}
+            <div className="space-y-6 text-left">
+              
+              {/* 1. Browser Notifications & App Alerts */}
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex space-x-3">
+                    <Bell className="h-4.5 w-4.5 text-indigo-500 mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">Browser Notifications</h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal mt-0.5">
+                        Receive instant push updates when fresh world dispatches are published.
+                      </p>
+                    </div>
+                  </div>
+                  <ToggleSwitch 
+                    checked={notificationsEnabled}
+                    onChange={toggleNotifications}
+                  />
+                </div>
+                
+                {/* Home Screen App trigger notification if PWA is supported/installed */}
+                {deferredPrompt && (
+                  <div className="pl-7.5 mt-1">
+                    <button
+                      type="button"
+                      onClick={installPwaApp}
+                      className="inline-flex items-center space-x-1 py-1 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/40 dark:text-indigo-400 rounded-lg text-[9px] font-bold tracking-wide transition-colors cursor-pointer"
+                    >
+                      <span>📥 Download Web App to Home Screen</span>
+                    </button>
+                  </div>
+                )}
+                {isPwaInstalled && (
+                  <div className="pl-7.5 text-[9px] text-emerald-500 font-mono flex items-center gap-1">
+                    <span>✓ Installed on Device (Home Screen alerts active)</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Newsletter Alerts */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex space-x-3">
+                  <Newspaper className="h-4.5 w-4.5 text-indigo-500 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">Newsletter Alerts</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal mt-0.5">
+                      Subscribe to automated breaking news alerts on your registered Google email.
+                    </p>
+                  </div>
+                </div>
+                <ToggleSwitch 
+                  checked={isSubscribed}
+                  onChange={handleToggleNewsletter}
+                  disabled={isSubscribing}
+                />
+              </div>
+
+              {/* 3. Personalized Ads Consent */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex space-x-3">
+                  <Shield className="h-4.5 w-4.5 text-indigo-500 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">Personalized Ads</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal mt-0.5">
+                      Allow cookie tracking to tailor personalized advertisements.
+                    </p>
+                  </div>
+                </div>
+                <ToggleSwitch 
+                  checked={adsConsent === 'granted'}
+                  onChange={toggleAdsConsent}
+                />
+              </div>
+
+            </div>
+
+            <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-900 text-center">
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-6 py-2 bg-slate-950 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-semibold rounded-full cursor-pointer transition-colors shadow-sm"
+              >
+                Save Preferences
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* YouTube-style Search Overlay Pop-up Modal */}
       {isSearchOpen && (
