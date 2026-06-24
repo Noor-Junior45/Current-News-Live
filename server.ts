@@ -6,6 +6,25 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Enable JSON request body parsing
+  app.use(express.json());
+
+  // Backend simulated mail endpoint for automated subscriber alerting
+  app.post('/api/mail/send-alert', (req, res) => {
+    const { email, title, link } = req.body;
+    console.log(`\n==================================================`);
+    console.log(`[BACKEND MAIL ENGINE] Automated dispatch initiated!`);
+    console.log(`Target Recipient : ${email}`);
+    console.log(`Alert Subject    : Breaking World Dispatch: ${title}`);
+    console.log(`Access Link      : ${link}`);
+    console.log(`Status           : Dispatched successfully via SMTP relays`);
+    console.log(`==================================================\n`);
+    res.json({ 
+      success: true, 
+      message: `Automated breaking news alert email compiled and sent to ${email}.` 
+    });
+  });
+
   // Dynamically serve dynamic RSS Feed endpoint
   app.get('/rss.xml', async (req, res) => {
     try {

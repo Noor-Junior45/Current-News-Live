@@ -92,7 +92,7 @@ export default function PrivacyView() {
               <strong>Newsletter Subscriptions:</strong> If you voluntarily enter your email address into our newsletter popup or footer registry, we store that email address securely inside our Google Firebase Cloud Firestore database to send alerts about breaking news.
             </li>
             <li>
-              <strong>Curation Cache & Likes:</strong> When you "Like" dispatches, we store those markers solely on your local device's memory cache (using local storage). We do not correlate your curated likes with your physical identity.
+              <strong>Curation Cache & Likes:</strong> When you "Like" or "Dislike" dispatches, we store those markers solely on your local device's memory cache (using local storage) for offline tracking. <strong>We do not share any like or dislike data with the admin.</strong> We do not correlate your curated reactions with your physical identity.
             </li>
             <li>
               <strong>Administrative Access Credentials:</strong> For authorized writers and editors logging into the Editorial Portal, we collect and process registration credentials via Firebase Authentication services.
