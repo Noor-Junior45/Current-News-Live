@@ -188,10 +188,17 @@ export default function Footer() {
           {/* Useful Reader Information & Nav */}
           <div className="space-y-1.5">
             <h4 className="font-display font-semibold text-xs uppercase tracking-wider text-white">Resources</h4>
-            <div className="flex items-center space-x-3 text-[11px]">
-              <Link to="/" className="text-slate-400 hover:text-white transition-colors">Reader Feed</Link>
-              <span className="text-slate-700">|</span>
-              <Link to="/admin" className="text-slate-400 hover:text-white transition-colors">Editorial Portal</Link>
+            <div className="flex flex-col space-y-1.5 text-[11px]">
+              <div className="flex items-center space-x-3">
+                <Link to="/" className="text-slate-400 hover:text-white transition-colors">Reader Feed</Link>
+                <span className="text-slate-700">|</span>
+                <Link to="/admin" className="text-slate-400 hover:text-white transition-colors">Editorial Portal</Link>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Link to="/privacy" className="text-slate-400 hover:text-white transition-colors">Privacy Policy</Link>
+                <span className="text-slate-700">|</span>
+                <Link to="/terms" className="text-slate-400 hover:text-white transition-colors">Terms of Service</Link>
+              </div>
             </div>
             <p className="text-[10px] text-slate-500 leading-normal max-w-xs border-t border-slate-800 pt-1.5">
               Use the live search filter at the top of the homepage to trace dispatches instantly.

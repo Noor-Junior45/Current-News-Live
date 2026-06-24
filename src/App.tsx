@@ -12,12 +12,14 @@ import HomeView from './views/HomeView';
 import PostDetailView from './views/PostDetailView';
 import AdminView from './views/AdminView';
 import LikedView from './views/LikedView';
+import PrivacyView from './views/PrivacyView';
+import TermsView from './views/TermsView';
 
 import { useLocation } from 'react-router-dom';
 
 function ConditionalFooter() {
   const location = useLocation();
-  if (location.pathname !== '/') {
+  if (location.pathname !== '/' && location.pathname !== '/privacy' && location.pathname !== '/terms') {
     return null;
   }
   return <Footer />;
@@ -65,6 +67,10 @@ export default function App() {
 
             {/* 4. Liked Dispatches Page */}
             <Route path="/liked" element={<LikedView />} />
+
+            {/* 5. Legal & Policies Pages */}
+            <Route path="/privacy" element={<PrivacyView />} />
+            <Route path="/terms" element={<TermsView />} />
             
             {/* Fallback route back to home */}
             <Route path="*" element={<HomeView />} />
