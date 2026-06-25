@@ -30,10 +30,17 @@ service cloud.firestore {
       // Anyone can add themselves to the audience
       allow create: if true;
 
-      // Only the admin can read, modify or delete the audience database
-      allow read, update, delete: if request.auth != null && 
-                                     request.auth.token.email != null &&
-                                     request.auth.token.email in ["mdhassan1738@gmail.com", "alifraja404@gmail.com", "mdnoor4860@gmail.com", "Alifraja404@gmail.com", "Mdnoor4860@gmail.com", "AlifRaja404@gmail.com", "MdNoor4860@gmail.com"];
+      // Only the admin or the subscriber themselves can read or delete their subscription
+      allow read, delete: if (request.auth != null && 
+                             request.auth.token.email != null &&
+                             (request.auth.token.email in ["mdhassan1738@gmail.com", "alifraja404@gmail.com", "mdnoor4860@gmail.com", "Alifraja404@gmail.com", "Mdnoor4860@gmail.com", "AlifRaja404@gmail.com", "MdNoor4860@gmail.com"] ||
+                              resource.data.email == request.auth.token.email.toLower() ||
+                              resource.data.email == request.auth.token.email));
+
+      // Only the admin can update subscribers (or write completely)
+      allow update: if request.auth != null && 
+                       request.auth.token.email != null &&
+                       request.auth.token.email in ["mdhassan1738@gmail.com", "alifraja404@gmail.com", "mdnoor4860@gmail.com", "Alifraja404@gmail.com", "Mdnoor4860@gmail.com", "AlifRaja404@gmail.com", "MdNoor4860@gmail.com"];
     }
   }
 }
