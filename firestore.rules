@@ -34,13 +34,24 @@ service cloud.firestore {
       allow read, delete: if (request.auth != null && 
                              request.auth.token.email != null &&
                              (request.auth.token.email in ["mdhassan1738@gmail.com", "alifraja404@gmail.com", "mdnoor4860@gmail.com", "Alifraja404@gmail.com", "Mdnoor4860@gmail.com", "AlifRaja404@gmail.com", "MdNoor4860@gmail.com"] ||
-                              resource.data.email == request.auth.token.email.toLower() ||
+                              resource.data.email == request.auth.token.email.lower() ||
                               resource.data.email == request.auth.token.email));
 
       // Only the admin can update subscribers (or write completely)
       allow update: if request.auth != null && 
                        request.auth.token.email != null &&
                        request.auth.token.email in ["mdhassan1738@gmail.com", "alifraja404@gmail.com", "mdnoor4860@gmail.com", "Alifraja404@gmail.com", "Mdnoor4860@gmail.com", "AlifRaja404@gmail.com", "MdNoor4860@gmail.com"];
+    }
+
+    match /reactions/{reactionId} {
+      // Anyone can read reactions
+      allow read: if true;
+
+      // An authenticated user can create/update/delete their own reaction
+      allow create, update: if request.auth != null && 
+                            request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && 
+                       resource.data.userId == request.auth.uid;
     }
   }
 }

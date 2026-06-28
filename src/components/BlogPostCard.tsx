@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Post, slugify } from '../types';
 import { Link } from 'react-router-dom';
 import { Calendar, Youtube, Facebook, ArrowRight, ThumbsUp, ThumbsDown, Eye } from 'lucide-react';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, increment } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
 
 interface BlogPostCardProps {
   post: Post;
@@ -35,6 +35,34 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
   useEffect(() => {
     const saved = localStorage.getItem(`react_${post.id}`) as 'liked' | 'disliked' | null;
     setMyReaction(saved);
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const reactionDocRef = doc(db, 'reactions', `${user.uid}_${post.id}`);
+          const snap = await getDoc(reactionDocRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            const serverType = data.type as 'liked' | 'disliked' | null;
+            setMyReaction(serverType);
+            if (serverType) {
+              localStorage.setItem(`react_${post.id}`, serverType);
+            } else {
+              localStorage.removeItem(`react_${post.id}`);
+            }
+          } else {
+            setMyReaction(null);
+            localStorage.removeItem(`react_${post.id}`);
+          }
+        } catch (err) {
+          console.warn('Failed to load user reaction from Firestore', err);
+        }
+      } else {
+        setMyReaction(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, [post.id]);
 
   useEffect(() => {
@@ -46,7 +74,8 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
     e.stopPropagation();
     e.preventDefault();
 
-    if (!auth.currentUser) {
+    const user = auth.currentUser;
+    if (!user) {
       const confirmSignIn = window.confirm("To like or dislike this dispatch, you must be logged in. Would you like to sign in with your Google account now?");
       if (confirmSignIn) {
         try {
@@ -61,6 +90,8 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
     }
 
     const postRef = doc(db, 'posts', post.id);
+    const reactionRef = doc(db, 'reactions', `${user.uid}_${post.id}`);
+
     let newLikes = likes;
     let newDislikes = dislikes;
     let nextReaction: 'liked' | 'disliked' | null = null;
@@ -105,6 +136,20 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
     setMyReaction(nextReaction);
 
     try {
+      // Update reactions collection
+      if (nextReaction === null) {
+        await deleteDoc(reactionRef);
+      } else {
+        await setDoc(reactionRef, {
+          userId: user.uid,
+          userEmail: user.email || '',
+          postId: post.id,
+          type: nextReaction,
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      // Update post likes/dislikes counts
       const updates: Record<string, any> = {};
       if (likesDiff !== 0) updates.likes = increment(likesDiff);
       if (dislikesDiff !== 0) updates.dislikes = increment(dislikesDiff);
@@ -112,7 +157,16 @@ export default function BlogPostCard({ post, globalPenName }: BlogPostCardProps)
         await updateDoc(postRef, updates);
       }
     } catch (err) {
-      console.error('Failed to update likes/dislikes in database', err);
+      console.error('Failed to update reaction in Firestore', err);
+      // Rollback on failure
+      setLikes(likes);
+      setDislikes(dislikes);
+      setMyReaction(myReaction);
+      if (myReaction === null) {
+        localStorage.removeItem(`react_${post.id}`);
+      } else {
+        localStorage.setItem(`react_${post.id}`, myReaction);
+      }
     }
   };
 

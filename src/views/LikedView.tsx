@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, documentId, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { Post } from '../types';
 import { Link } from 'react-router-dom';
 import { ThumbsUp, ArrowLeft, BookOpen, Clock, Tag } from 'lucide-react';
@@ -14,18 +15,40 @@ export default function LikedView() {
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'instant' });
 
-    const fetchLikedPostsFromStorage = async () => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
       setError(null);
       try {
-        const likedIds: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('react_')) {
-            const val = localStorage.getItem(key);
-            if (val === 'liked') {
-              const id = key.replace('react_', '');
-              likedIds.push(id);
+        let likedIds: string[] = [];
+
+        if (user) {
+          // Fetch reactions from Firestore
+          const reactionsQuery = query(
+            collection(db, 'reactions'),
+            where('userId', '==', user.uid),
+            where('type', '==', 'liked')
+          );
+          const reactionSnapshot = await getDocs(reactionsQuery);
+          reactionSnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.postId) {
+              likedIds.push(data.postId);
+            }
+          });
+        }
+
+        // Fallback to localStorage if the user is a guest or we didn't find any Firestore liked posts yet
+        if (likedIds.length === 0) {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('react_')) {
+              const val = localStorage.getItem(key);
+              if (val === 'liked') {
+                const id = key.replace('react_', '');
+                if (!likedIds.includes(id)) {
+                  likedIds.push(id);
+                }
+              }
             }
           }
         }
@@ -49,7 +72,6 @@ export default function LikedView() {
           list.push({ id: docSnap.id, ...docSnap.data() } as Post);
         });
 
-        // Sort posts so they display nicely (or preserve order)
         setLikedPosts(list);
       } catch (err) {
         console.error('Failed to fetch liked posts', err);
@@ -57,9 +79,9 @@ export default function LikedView() {
       } finally {
         setLoading(false);
       }
-    };
+    });
 
-    fetchLikedPostsFromStorage();
+    return () => unsubscribe();
   }, []);
 
   return (

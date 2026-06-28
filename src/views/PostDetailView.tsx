@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, increment, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
 import { Post, slugify } from '../types';
 import AdSpace from '../components/AdSpace';
 import EmbedHandler from '../components/EmbedHandler';
@@ -81,6 +81,35 @@ export default function PostDetailView() {
       setDislikes(post.dislikes || 0);
       const saved = localStorage.getItem(`react_${post.id}`) as 'liked' | 'disliked' | null;
       setMyReaction(saved);
+
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          try {
+            const reactionDocRef = doc(db, 'reactions', `${user.uid}_${post.id}`);
+            const snap = await getDoc(reactionDocRef);
+            if (snap.exists()) {
+              const data = snap.data();
+              const serverType = data.type as 'liked' | 'disliked' | null;
+              setMyReaction(serverType);
+              if (serverType) {
+                localStorage.setItem(`react_${post.id}`, serverType);
+              } else {
+                localStorage.removeItem(`react_${post.id}`);
+              }
+            } else {
+              setMyReaction(null);
+              localStorage.removeItem(`react_${post.id}`);
+            }
+          } catch (err) {
+            console.warn('Failed to load user reaction from Firestore', err);
+          }
+        } else {
+          // Keep local state for guests, but if they logged out reset
+          setMyReaction(null);
+        }
+      });
+
+      return () => unsubscribe();
     }
   }, [post]);
 
@@ -223,7 +252,8 @@ export default function PostDetailView() {
 
   const handleReaction = async (type: 'liked' | 'disliked') => {
     if (!post) return;
-    if (!auth.currentUser) {
+    const user = auth.currentUser;
+    if (!user) {
       const confirmSignIn = window.confirm("To react to this article, you must be logged in. Would you like to sign in with your Google account now?");
       if (confirmSignIn) {
         try {
@@ -236,7 +266,10 @@ export default function PostDetailView() {
       }
       return;
     }
+
     const postRef = doc(db, 'posts', post.id);
+    const reactionRef = doc(db, 'reactions', `${user.uid}_${post.id}`);
+
     let newLikes = likes;
     let newDislikes = dislikes;
     let nextReaction: 'liked' | 'disliked' | null = null;
@@ -281,6 +314,20 @@ export default function PostDetailView() {
     setMyReaction(nextReaction);
 
     try {
+      // Update reactions collection
+      if (nextReaction === null) {
+        await deleteDoc(reactionRef);
+      } else {
+        await setDoc(reactionRef, {
+          userId: user.uid,
+          userEmail: user.email || '',
+          postId: post.id,
+          type: nextReaction,
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      // Update post likes/dislikes counts
       const updates: Record<string, any> = {};
       if (likesDiff !== 0) updates.likes = increment(likesDiff);
       if (dislikesDiff !== 0) updates.dislikes = increment(dislikesDiff);
@@ -289,6 +336,15 @@ export default function PostDetailView() {
       }
     } catch (err) {
       console.error('Failed to write reaction to cloud', err);
+      // Rollback on failure
+      setLikes(likes);
+      setDislikes(dislikes);
+      setMyReaction(myReaction);
+      if (myReaction === null) {
+        localStorage.removeItem(`react_${post.id}`);
+      } else {
+        localStorage.setItem(`react_${post.id}`, myReaction);
+      }
     }
   };
 
@@ -941,19 +997,10 @@ export default function PostDetailView() {
             />
             
             {/* Download/Source Option bar */}
-            <div className="mt-4 flex gap-3 text-xs font-mono text-slate-300">
-              <span className="bg-slate-900/60 px-3 py-1 rounded-full border border-white/5 shadow max-w-[200px] sm:max-w-none truncate">
+            <div className="mt-4 flex justify-center text-xs font-mono">
+              <span className="bg-white text-slate-900 font-semibold px-4 py-1.5 rounded-full border border-slate-200 shadow-md text-xs tracking-wide">
                 Ground Report Image
               </span>
-              <a 
-                href={lightboxImage} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="bg-indigo-650 hover:bg-indigo-600 font-bold px-3 py-1 rounded-full text-white shadow transition-all cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Open Original ↗
-              </a>
             </div>
           </div>
         </div>
