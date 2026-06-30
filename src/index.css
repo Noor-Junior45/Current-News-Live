@@ -69,6 +69,31 @@ body {
   font-style: italic;
 }
 
+.article-rich-text blockquote {
+  border-left: 4px solid #6366f1; /* Premium Indigo left border line */
+  background-color: #f8fafc; /* Subtly raised light-gray-blue block container background */
+  padding: 0.75rem 1.25rem;
+  margin: 1.25rem 0;
+  font-style: italic;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #475569;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+html.dark .article-rich-text blockquote {
+  border-left-color: #818cf8;
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+.newspaper-paper .article-rich-text blockquote,
+html.dark .newspaper-paper .article-rich-text blockquote {
+  border-left-color: #d97706 !important; /* Elegant warm Amber border for the classic newspaper print */
+  background-color: #f3eedd !important; /* Authentic matching warmer cream highlight block */
+  color: #44403c !important; /* Muted warm stone print ink color */
+}
+
 /* Quill Editor custom styling to match our theme */
 .quill {
   background-color: white;

@@ -264,6 +264,25 @@ export default function AdminView() {
     }
   };
 
+  const handleParseAndAddHashtags = (rawInput: string) => {
+    const tokens = rawInput.split(/[\s,;]+/);
+    const addedTags: string[] = [];
+    
+    tokens.forEach((tok) => {
+      let cleaned = tok.trim();
+      if (!cleaned) return;
+      
+      const formatted = cleaned.startsWith('#') ? cleaned : '#' + cleaned;
+      if (formatted.length > 1 && !hashtags.includes(formatted) && !addedTags.includes(formatted)) {
+        addedTags.push(formatted);
+      }
+    });
+
+    if (addedTags.length > 0) {
+      setHashtags((prev) => [...prev, ...addedTags]);
+    }
+  };
+
   const handleResetForm = () => {
     setTitle('');
     setContent('');
@@ -1124,15 +1143,24 @@ export default function AdminView() {
                       value={hashtagInput}
                       onChange={(e) => setHashtagInput(e.target.value)}
                       className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-indigo-500 font-sans"
+                      onPaste={(e) => {
+                        const pasteText = e.clipboardData.getData('text');
+                        if (
+                          pasteText.trim().includes(' ') || 
+                          pasteText.trim().includes(',') || 
+                          (pasteText.trim().match(/#/g) || []).length > 1
+                        ) {
+                          e.preventDefault();
+                          handleParseAndAddHashtags(pasteText);
+                          setHashtagInput('');
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           const val = hashtagInput.trim();
                           if (val) {
-                            const formatted = val.startsWith('#') ? val : '#' + val;
-                            if (!hashtags.includes(formatted)) {
-                              setHashtags([...hashtags, formatted]);
-                            }
+                            handleParseAndAddHashtags(val);
                             setHashtagInput('');
                           }
                         }
@@ -1152,10 +1180,7 @@ export default function AdminView() {
                     onClick={() => {
                       const val = hashtagInput.trim();
                       if (val) {
-                        const formatted = val.startsWith('#') ? val : '#' + val;
-                        if (!hashtags.includes(formatted)) {
-                          setHashtags([...hashtags, formatted]);
-                        }
+                        handleParseAndAddHashtags(val);
                         setHashtagInput('');
                       }
                     }}
