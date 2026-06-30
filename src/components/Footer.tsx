@@ -30,20 +30,6 @@ export default function Footer() {
             <h4 className="font-display font-semibold text-[9px] sm:text-[10px] uppercase tracking-wider text-white">Resources</h4>
             <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3 mt-1" id="footer-resources-container">
               <Link 
-                to="/" 
-                className="inline-flex items-center justify-center px-2.5 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider rounded-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 text-white shadow-md hover:shadow-indigo-500/25 hover:scale-105 active:scale-95 transition-all duration-200"
-                id="footer-feed-link"
-              >
-                Feed
-              </Link>
-              <Link 
-                to="/admin" 
-                className="inline-flex items-center justify-center px-2.5 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600 text-white shadow-md hover:shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-all duration-200"
-                id="footer-portal-link"
-              >
-                Portal
-              </Link>
-              <Link 
                 to="/privacy" 
                 className="inline-flex items-center justify-center px-2.5 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-md hover:shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all duration-200"
                 id="footer-privacy-link"
