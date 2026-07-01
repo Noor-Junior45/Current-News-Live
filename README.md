@@ -1,20 +1,113 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+## 📰 Current News Live
 
-# Run and deploy your AI Studio app
+**Independent Ledger & Live Alerts** — a self-publishing news PWA with real-time posts, an admin dashboard, automated email alerts, and a dynamic RSS feed.
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/6e2ba5e1-c245-4586-90fd-9ba4777b81c4
-
-## Run Locally
-
-**Prerequisites:**  Node.js
+🔗 **Live:** [currentnews.blog](https://currentnews.blog)
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?logo=firebase&logoColor=black)
+![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel)
+
+---
+
+## Overview
+
+Current News Live is a lightweight, installable news platform where an admin writes and publishes dispatches directly from a browser-based dashboard, and readers browse, save, and subscribe to breaking news alerts — no CMS, no backend server to babysit. Posts live in Firestore, alerts go out over email via Brevo, and the whole thing installs like a native app on mobile.
+
+## ✨ Features
+
+- 📱 **Installable PWA** — offline-ready, add-to-home-screen support
+- 📝 **Admin dashboard** — rich text editor for publishing, editing, and managing posts
+- 📬 **Automated breaking news alerts** — subscriber emails sent via the Brevo transactional API
+- 📡 **Dynamic RSS feed** — generated live from Firestore data at `/rss.xml`
+- 🔥 **Firebase / Firestore backend** — no separate database to manage
+- ❤️ **Liked posts view** — readers can save articles for later
+- 🌗 **Light/dark theme toggle**
+- 💰 **Google AdSense** integration for monetization
+- 📊 **Google Analytics** tracking
+- ⚙️ **SEO-optimized** — Open Graph, Twitter Cards, structured metadata baked into `index.html`
+- ⚡ **Serverless on Vercel** — mail, RSS, and `ads.txt` run as Vercel functions in production
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
+| Routing | React Router 7 |
+| Data | Firebase (Firestore) |
+| Email | Brevo (Sendinblue) transactional API |
+| Rich text | React Quill |
+| Animation | Motion (Framer Motion) |
+| Hosting | Vercel (static build + serverless functions) |
+| Local dev server | Express (via `tsx`) |
+
+## 🏗 Architecture note: local dev vs. production
+
+This project runs differently depending on environment, which matters if you're debugging:
+
+- **Local development** (`npm run dev`) spins up an Express server (`server.ts`) via `tsx`, which handles the mail endpoint, RSS feed, and `ads.txt` alongside the Vite dev middleware.
+- **Production (Vercel)** does **not** run a persistent Node server. Vercel serves the static Vite build and auto-detects serverless functions placed under `/api`. The mail, RSS, and ads routes are implemented as Vercel functions (`api/mail/send-alert.ts`, `api/rss.xml.ts`, `api/ads.txt.ts`) so they work identically in both environments.
+
+If you add a new backend route, remember to add it in the Vercel-function style under `/api`, not just inside `server.ts`, or it will 404 in production.
+
+## 🚀 Getting Started
+
+```bash
+git clone https://github.com/Noor-Junior45/CurrentNews.git
+cd CurrentNews
+npm install
+cp .env.example .env   # then fill in the values below
+npm run dev
+```
+
+The app will be running at `http://localhost:3000`.
+
+## 🔑 Environment Variables
+
+| Variable | Description | Required |
+|---|---|---|
+| `GEMINI_API_KEY` | Gemini API key for AI-assisted features | Yes |
+| `APP_URL` | Base URL of the deployed app | Yes |
+| `BREVO_API_KEY` | Brevo API key for sending email alerts | Yes |
+| `BREVO_SENDER_EMAIL` | Verified sender email in Brevo | Yes |
+| `BREVO_SENDER_NAME` | Display name for outgoing alert emails | Yes |
+| `VITE_ADSENSE_CLIENT` | Google AdSense client ID | Optional |
+| `VITE_ADSENSE_SLOT_LEADERBOARD` | AdSense slot ID (leaderboard placement) | Optional |
+| `VITE_ADSENSE_SLOT_SIDEBAR` | AdSense slot ID (sidebar placement) | Optional |
+| `VITE_ADSENSE_SLOT_FOOTER` | AdSense slot ID (footer placement) | Optional |
+
+> Firebase config is read from `firebase-applet-config.json`, not environment variables.
+
+**Important:** when deploying to Vercel, set these in **Project → Settings → Environment Variables** — a local `.env` file alone will not reach the production build.
+
+## 📦 Available Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start local dev server (Vite + Express, via `tsx`) |
+| `npm run build` | Build production assets |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Type-check with `tsc --noEmit` |
+| `npm run clean` | Remove build output |
+
+## 🌐 Deployment
+
+Deployed on **Vercel** — pushing to `main` triggers an automatic deployment. The build serves the static Vite output plus the serverless functions under `/api`. See the architecture note above before adding new backend routes.
+
+## 🗺 Roadmap
+
+- [ ] Push notifications for breaking news
+- [ ] Category-based subscriber alert preferences
+- [ ] Search across published dispatches
+- [ ] Author bylines and multi-admin support
+
+## 📄 License
+
+This project is currently unlicensed / all rights reserved. Add a license here if you intend to open source it.
+
+---
+
+Built by [Noor-Junior45](https://github.com/Noor-Junior45)
