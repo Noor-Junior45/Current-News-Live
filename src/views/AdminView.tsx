@@ -315,7 +315,18 @@ export default function AdminView() {
         })
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type');
+      let data: any = {};
+      const isJson = !!(contentType && contentType.includes('application/json'));
+
+      if (isJson) {
+        data = await response.json();
+      } else {
+        const textResponse = await response.text();
+        const shortText = textResponse.substring(0, 150).trim();
+        throw new Error(`The mail server returned an invalid/non-JSON response (HTTP status ${response.status}): "${shortText}..."`);
+      }
+
       if (response.ok && data.success) {
         setTestEmailFeedback({ status: 'success', message: `Test email sent successfully to ${testEmailAddress.trim()} via Brevo API!` });
       } else {
