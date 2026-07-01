@@ -2,28 +2,60 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
 
 // Load environment variables
 dotenv.config();
 
-// Lazily initialize SMTP mail transport
-let transporter: nodemailer.Transporter | null = null;
-
-function getMailTransporter() {
-  if (!transporter) {
-    const user = process.env.GMAIL_USER || 'noorpos.alerts@gmail.com';
-    const pass = process.env.GMAIL_APP_PASS || 'xilt ckks vqlj xcgi';
-    
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: user,
-        pass: pass
-      }
-    });
+async function sendBrevoEmail(toEmail: string, subject: string, htmlContent: string, textContent: string) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    throw new Error('BREVO_API_KEY environment variable is not defined.');
   }
-  return transporter;
+
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'alerts@currentnews.blog';
+  const senderName = process.env.BREVO_SENDER_NAME || 'Current News Live';
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: {
+        name: senderName,
+        email: senderEmail
+      },
+      to: [
+        {
+          email: toEmail
+        }
+      ],
+      subject: subject,
+      htmlContent: htmlContent,
+      textContent: textContent
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let parsedMessage = errorText;
+    try {
+      const parsed = JSON.parse(errorText);
+      if (parsed.message) {
+        parsedMessage = parsed.message;
+      }
+    } catch (e) {}
+
+    if (response.status === 401 && (parsedMessage.toLowerCase().includes('ip address') || parsedMessage.toLowerCase().includes('authorised_ips') || parsedMessage.toLowerCase().includes('unauthorised') || parsedMessage.toLowerCase().includes('unrecognized'))) {
+      throw new Error(`BREVO_IP_UNAUTHORIZED: ${parsedMessage}`);
+    }
+
+    throw new Error(`Brevo API responded with status ${response.status}: ${parsedMessage}`);
+  }
+
+  return await response.json();
 }
 
 async function startServer() {
@@ -33,7 +65,7 @@ async function startServer() {
   // Enable JSON request body parsing
   app.use(express.json());
 
-  // Backend mail endpoint for automated subscriber alerting using real Gmail SMTP
+  // Backend mail endpoint for automated subscriber alerting using Brevo SMTP
   app.post('/api/mail/send-alert', async (req, res) => {
     const { email, title, link } = req.body;
     
@@ -42,15 +74,13 @@ async function startServer() {
     }
 
     console.log(`\n==================================================`);
-    console.log(`[BACKEND SMTP ENGINE] Dispatch initiated via Gmail SMTP`);
+    console.log(`[BACKEND BREVO API] Dispatch initiated`);
     console.log(`Target Recipient : ${email}`);
     console.log(`Alert Subject    : ${title}`);
     console.log(`Access Link      : ${link || 'N/A'}`);
     console.log(`==================================================\n`);
 
     try {
-      const activeTransporter = getMailTransporter();
-      const mailUser = process.env.GMAIL_USER || 'noorpos.alerts@gmail.com';
 
       const htmlContent = `<!DOCTYPE html>
 <html>
@@ -179,25 +209,32 @@ async function startServer() {
 </body>
 </html>`;
 
-      const info = await activeTransporter.sendMail({
-        from: `"Current News Live" <${mailUser}>`,
-        to: email,
-        subject: title,
-        text: `Welcome to Current News Live! ${title}. Read more at ${link || 'https://currentnews.blog'}`,
-        html: htmlContent
-      });
+      const textContent = `Welcome to Current News Live! ${title}. Read more at ${link || 'https://currentnews.blog'}`;
+      const result = await sendBrevoEmail(email, title, htmlContent, textContent);
 
-      console.log(`[BACKEND SMTP ENGINE] Email successfully dispatched. Message ID: ${info.messageId}`);
+      console.log(`[BACKEND BREVO API] Email successfully dispatched. Result:`, result);
       res.json({ 
         success: true, 
-        message: `Automated breaking news alert email compiled and sent to ${email} via Google SMTP.` 
+        message: `Automated breaking news alert email compiled and sent to ${email} via Brevo API.` 
       });
 
     } catch (err: any) {
-      console.error('[BACKEND SMTP ENGINE] Failed to send email via Google SMTP:', err);
+      console.error('[BACKEND BREVO API] Failed to send email via Brevo API:', err);
+      
+      if (err.message && err.message.startsWith('BREVO_IP_UNAUTHORIZED:')) {
+        const rawMessage = err.message.replace('BREVO_IP_UNAUTHORIZED:', '').trim();
+        return res.status(401).json({
+          success: false,
+          isIpRestriction: true,
+          message: `Brevo security blocked this request because our server's IP is not on your Brevo IP whitelist.`,
+          detail: rawMessage,
+          solution: `Please log into Brevo, navigate to Settings > Security (https://app.brevo.com/security/authorised_ips) and authorize this IP address or disable IP restriction entirely to allow automated mail alerts.`
+        });
+      }
+
       res.status(500).json({ 
         success: false, 
-        message: 'SMTP dispatch failed', 
+        message: 'Brevo API dispatch failed', 
         error: err.message 
       });
     }
