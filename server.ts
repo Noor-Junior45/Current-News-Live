@@ -3,60 +3,28 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 
+// Import Vercel serverless handlers
+import sendAlertHandler from './api/mail/send-alert.js';
+import rssHandler from './api/rss.xml.js';
+import adsHandler from './api/ads.txt.js';
+
 // Load environment variables
 dotenv.config();
 
-async function sendBrevoEmail(toEmail: string, subject: string, htmlContent: string, textContent: string) {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    throw new Error('BREVO_API_KEY environment variable is not defined.');
-  }
-
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'alerts@currentnews.blog';
-  const senderName = process.env.BREVO_SENDER_NAME || 'Current News Live';
-
-  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'accept': 'application/json',
-      'api-key': apiKey,
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      sender: {
-        name: senderName,
-        email: senderEmail
-      },
-      to: [
-        {
-          email: toEmail
-        }
-      ],
-      subject: subject,
-      htmlContent: htmlContent,
-      textContent: textContent
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    let parsedMessage = errorText;
+// Helper to adapt Vercel serverless handler (req, res) to Express middleware (req, res)
+const adaptVercelHandler = (handler: any) => {
+  return async (req: express.Request, res: express.Response) => {
     try {
-      const parsed = JSON.parse(errorText);
-      if (parsed.message) {
-        parsedMessage = parsed.message;
+      // Vercel serverless request body is already parsed by express.json()
+      await handler(req as any, res as any);
+    } catch (error: any) {
+      console.error('Error in adapted Vercel handler:', error);
+      if (!res.headersSent) {
+        res.status(500).send(error?.message || 'Internal Server Error');
       }
-    } catch (e) {}
-
-    if (response.status === 401 && (parsedMessage.toLowerCase().includes('ip address') || parsedMessage.toLowerCase().includes('authorised_ips') || parsedMessage.toLowerCase().includes('unauthorised') || parsedMessage.toLowerCase().includes('unrecognized'))) {
-      throw new Error(`BREVO_IP_UNAUTHORIZED: ${parsedMessage}`);
     }
-
-    throw new Error(`Brevo API responded with status ${response.status}: ${parsedMessage}`);
-  }
-
-  return await response.json();
-}
+  };
+};
 
 async function startServer() {
   const app = express();
@@ -65,307 +33,14 @@ async function startServer() {
   // Enable JSON request body parsing
   app.use(express.json());
 
-  // Backend mail endpoint for automated subscriber alerting using Brevo SMTP
-  app.post('/api/mail/send-alert', async (req, res) => {
-    const { email, title, link } = req.body;
-    
-    if (!email || !title) {
-      return res.status(400).json({ success: false, message: 'Recipient email and subject title are required.' });
-    }
+  // Backend mail endpoint for automated subscriber alerting adapted from the Vercel handler
+  app.post('/api/mail/send-alert', adaptVercelHandler(sendAlertHandler));
 
-    console.log(`\n==================================================`);
-    console.log(`[BACKEND BREVO API] Dispatch initiated`);
-    console.log(`Target Recipient : ${email}`);
-    console.log(`Alert Subject    : ${title}`);
-    console.log(`Access Link      : ${link || 'N/A'}`);
-    console.log(`==================================================\n`);
+  // Dynamically serve dynamic RSS Feed endpoint adapted from the Vercel handler
+  app.get('/rss.xml', adaptVercelHandler(rssHandler));
 
-    try {
-
-      const htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f8fafc;
-      margin: 0;
-      padding: 0;
-    }
-    .wrapper {
-      width: 100%;
-      background-color: #f8fafc;
-      padding: 40px 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      border: 1px solid #e2e8f0;
-    }
-    .header {
-      background-color: #0f172a;
-      padding: 32px 24px;
-      text-align: center;
-    }
-    .header h1 {
-      color: #ffffff;
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-    }
-    .header p {
-      color: #94a3b8;
-      margin: 4px 0 0 0;
-      font-size: 13px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .content {
-      padding: 40px 32px;
-      color: #334155;
-    }
-    .content h2 {
-      font-size: 20px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-top: 0;
-      margin-bottom: 16px;
-      line-height: 1.3;
-    }
-    .content p {
-      font-size: 15px;
-      line-height: 1.6;
-      color: #475569;
-      margin-top: 0;
-      margin-bottom: 24px;
-    }
-    .btn-container {
-      text-align: center;
-      margin: 32px 0 8px 0;
-    }
-    .btn {
-      display: inline-block;
-      background-color: #0f172a;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 12px 32px;
-      border-radius: 9999px;
-      font-weight: 600;
-      font-size: 14px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .footer {
-      background-color: #f1f5f9;
-      padding: 24px;
-      text-align: center;
-      font-size: 12px;
-      color: #64748b;
-      border-top: 1px solid #e2e8f0;
-    }
-    .footer p {
-      margin: 4px 0;
-    }
-    .footer a {
-      color: #0f172a;
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="wrapper">
-    <div class="container">
-      <div class="header">
-        <h1>Current News Live</h1>
-        <p>Independent Ledger &amp; Live Alerts</p>
-      </div>
-      <div class="content">
-        <h2>${title}</h2>
-        <p>Hello,</p>
-        <p>We are pleased to bring you the latest verified update from Current News Live. Stay ahead of the curve with our independent journalism and real-time dispatches.</p>
-        <p>Click the button below to access the live story or explore our coverage immediately.</p>
-        <div class="btn-container">
-          <a href="${link || 'https://currentnews.blog'}" class="btn" target="_blank">Access Live Story</a>
-        </div>
-      </div>
-      <div class="footer">
-        <p><strong>Current News Live</strong></p>
-        <p>Serving the public interest with transparent, accurate, and autonomous journalism.</p>
-        <p style="margin-top: 12px; color: #94a3b8;">
-          You received this email because you subscribed to our breaking news alerts.<br>
-          If you wish to stop receiving these dispatches, you can <a href="${link || 'https://currentnews.blog'}/unsubscribe">unsubscribe</a> at any time.
-        </p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
-
-      const textContent = `Welcome to Current News Live! ${title}. Read more at ${link || 'https://currentnews.blog'}`;
-      const result = await sendBrevoEmail(email, title, htmlContent, textContent);
-
-      console.log(`[BACKEND BREVO API] Email successfully dispatched. Result:`, result);
-      res.json({ 
-        success: true, 
-        message: `Automated breaking news alert email compiled and sent to ${email} via Brevo API.` 
-      });
-
-    } catch (err: any) {
-      console.error('[BACKEND BREVO API] Failed to send email via Brevo API:', err);
-      
-      if (err.message && err.message.startsWith('BREVO_IP_UNAUTHORIZED:')) {
-        const rawMessage = err.message.replace('BREVO_IP_UNAUTHORIZED:', '').trim();
-        return res.status(401).json({
-          success: false,
-          isIpRestriction: true,
-          message: `Brevo security blocked this request because our server's IP is not on your Brevo IP whitelist.`,
-          detail: rawMessage,
-          solution: `Please log into Brevo, navigate to Settings > Security (https://app.brevo.com/security/authorised_ips) and authorize this IP address or disable IP restriction entirely to allow automated mail alerts.`
-        });
-      }
-
-      res.status(500).json({ 
-        success: false, 
-        message: 'Brevo API dispatch failed', 
-        error: err.message 
-      });
-    }
-  });
-
-  // Dynamically serve dynamic RSS Feed endpoint
-  app.get('/rss.xml', async (req, res) => {
-    try {
-      const siteUrl = `${req.protocol}://${req.get('host')}`;
-      
-      // Configuration extracted dynamically
-      const config = {
-        projectId: "gen-lang-client-0638643565",
-        firestoreDatabaseId: "ai-studio-6e2ba5e1-c245-4586-90fd-9ba4777b81c4"
-      };
-
-      const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${config.projectId}/databases/${config.firestoreDatabaseId}/documents:runQuery`;
-      
-      const queryBody = {
-        structuredQuery: {
-          from: [{ collectionId: "posts" }],
-          orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
-          limit: 20
-        }
-      };
-
-      const response = await fetch(firestoreUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(queryBody)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Firestore REST query returned HTTP status ${response.status}`);
-      }
-
-      const queryResult = await response.json();
-      
-      // XML safety/escaping helper
-      const escapeXml = (unsafe: string) => {
-        return (unsafe || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-      };
-
-      // Raw Firestore REST Value mapping helper
-      const parseFirestoreFields = (fields: any) => {
-        const result: any = {};
-        if (!fields) return result;
-        for (const key of Object.keys(fields)) {
-          const valObj = fields[key];
-          if ('stringValue' in valObj) {
-            result[key] = valObj.stringValue;
-          } else if ('timestampValue' in valObj) {
-            result[key] = valObj.timestampValue;
-          } else if ('integerValue' in valObj) {
-            result[key] = parseInt(valObj.integerValue, 10);
-          } else if ('booleanValue' in valObj) {
-            result[key] = valObj.booleanValue;
-          } else if ('mapValue' in valObj) {
-            result[key] = parseFirestoreFields(valObj.mapValue.fields);
-          } else {
-            result[key] = Object.values(valObj)[0];
-          }
-        }
-        return result;
-      };
-
-      const items: any[] = [];
-      if (Array.isArray(queryResult)) {
-        for (const item of queryResult) {
-          if (item.document) {
-            const fields = parseFirestoreFields(item.document.fields);
-            const id = item.document.name.split("/").pop();
-            items.push({ id, ...fields });
-          }
-        }
-      }
-
-      // Build XML conformant RSS channel data
-      let xml = `<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-<channel>
-  <title>Current News Live - Independent Ledger</title>
-  <link>${siteUrl}</link>
-  <description>Serving the public interest with transparent, accurate, and autonomous journalism.</description>
-  <language>en-us</language>
-  <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-  <atom:link href="${siteUrl}/rss.xml" rel="self" type="application/rss+xml" />
-`;
-
-      for (const item of items) {
-        const title = item.title || 'Untitled Dispatch';
-        const rawContent = item.content || '';
-        const author = item.authorName || 'Chronicle Staff Report';
-        const category = item.category || 'General';
-        const pubDate = item.createdAt ? new Date(item.createdAt).toUTCString() : new Date().toUTCString();
-        const postLink = `${siteUrl}/post/${item.id}`;
-
-        xml += `  <item>
-    <title>${escapeXml(title)}</title>
-    <link>${escapeXml(postLink)}</link>
-    <guid isPermaLink="false">${escapeXml(item.id)}</guid>
-    <pubDate>${pubDate}</pubDate>
-    <author>${escapeXml(author)}</author>
-    <category>${escapeXml(category)}</category>
-    <description><![CDATA[${rawContent}]]></description>
-  </item>
-`;
-      }
-
-      xml += `</channel>
-</rss>`;
-
-      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-      res.status(200).send(xml);
-
-    } catch (err: any) {
-      console.error('RSS endpoint generation breakdown:', err);
-      res.status(500).setHeader('Content-Type', 'text/plain').send(`Unable to serve the RSS feed document: ${err.message}`);
-    }
-  });
-
-  // Serve the ads.txt file
-  app.get('/ads.txt', (req, res) => {
-    res.setHeader('Content-Type', 'text/plain');
-    res.send('google.com, pub-5865716270182311, DIRECT, f08c47fec0942fa0');
-  });
+  // Serve the ads.txt file adapted from the Vercel handler
+  app.get('/ads.txt', adaptVercelHandler(adsHandler));
 
   // Connect Vite configuration dynamically to support dev vs prod modes
   if (process.env.NODE_ENV !== "production") {
